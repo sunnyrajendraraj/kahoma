@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Kahoma",
+    "slug": "Kahoma",
+    "scheme": "kahoma",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#050508"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kahoma.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Kahoma records your stories to turn them into a book",
+        "NSPhotoLibraryUsageDescription": "Add character photos to bring your story to life"
+      }
+    },
+    "android": {
+      "package": "com.kahoma.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#050508"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": ["RECORD_AUDIO", "READ_EXTERNAL_STORAGE"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      ["expo-router", { "root": "./src/app" }],
+      "expo-av",
+      "expo-file-system",
+      "expo-image-picker"
+    ]
+  }
+}
