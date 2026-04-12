@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import type { Session as SupabaseSession, User } from '@supabase/supabase-js';
 
@@ -7,7 +8,9 @@ interface AuthState {
   session: SupabaseSession | null;
   loading: boolean;
   initialized: boolean;
+  onboarded: boolean | null;
   initialize: () => void;
+  completeOnboarding: () => Promise<void>;
   sendOTP: (email: string) => Promise<void>;
   verifyOTP: (email: string, token: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -18,6 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   loading: false,
   initialized: false,
+  onboarded: null,
 
   initialize: () => {
     // Listen for auth state changes
@@ -41,8 +45,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     });
 
+    // Check onboarding status
+    AsyncStorage.getItem('kahoma_onboarded').then((val) => {
+      set({ onboarded: val === 'true' });
+    });
+
     // Return cleanup function (store it if needed)
     return () => subscription.unsubscribe();
+  },
+
+  completeOnboarding: async () => {
+    await AsyncStorage.setItem('kahoma_onboarded', 'true');
+    set({ onboarded: true });
   },
 
   sendOTP: async (email: string) => {

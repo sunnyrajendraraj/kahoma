@@ -57,7 +57,8 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const replicateKey = Deno.env.get("REPLICATE_API_KEY")!;
+    const replicateKey = Deno.env.get("REPLICATE_API_KEY") ?? "";
+    const MOCK_MODE = Deno.env.get("MOCK_MODE") === "true";
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -72,14 +73,19 @@ serve(async (req) => {
       throw new Error("Failed to fetch chapters");
     }
 
+    let imagesGenerated = 0;
+    let imagesFailed = 0;
+
+    if (MOCK_MODE) {
+      // MOCK: Skip image generation entirely — book will render without images
+      console.log(`[MOCK] Picasso skipping image generation for ${chapters.length} chapters`);
+      imagesFailed = chapters.length; // report as "failed" so binder knows no images
+    } else {
     // Fetch characters with photos
     const { data: characters } = await supabase
       .from("characters")
       .select("*")
       .eq("session_id", session_id);
-
-    let imagesGenerated = 0;
-    let imagesFailed = 0;
 
     for (const chapter of chapters) {
       try {
@@ -230,6 +236,7 @@ serve(async (req) => {
         // Continue — never abort on single image failure
       }
     }
+    } // end else (non-mock)
 
     // Log
     await supabase.from("processing_log").insert({

@@ -64,66 +64,85 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY")!;
+    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
+    const MOCK_MODE = Deno.env.get("MOCK_MODE") === "true";
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Fetch context messages + existing entity store
-    const [messagesResult, entityResult] = await Promise.all([
-      supabase
-        .from("context_messages")
-        .select("role, content, message_order")
-        .eq("session_id", session_id)
-        .order("message_order", { ascending: true }),
-      supabase
-        .from("entity_store")
-        .select("*")
-        .eq("session_id", session_id)
-        .single(),
-    ]);
+    let parsed: Record<string, unknown>;
 
-    const messages = messagesResult.data ?? [];
-    const existingEntities = entityResult.data;
+    if (MOCK_MODE) {
+      // MOCK: Return realistic entity extraction
+      parsed = {
+        entities: [
+          { entity_id: "dadi-savitri", type: "character", name: "Dadi Savitri", user_perspective: "The anchor of the family. A woman of quiet, immovable strength who made the narrator feel that the world was safe.", emotional_charge: "positive", attributes: { birth_era: "1930s", city: "Lucknow" }, mentioned_in_chunks: [1] },
+          { entity_id: "papa", type: "character", name: "Papa", user_perspective: "A government servant by day but a dreamer at heart. His harmonium evenings were sacred — he taught the narrator to dream beyond the practical.", emotional_charge: "complex", attributes: { occupation: "government job", passion: "music" }, mentioned_in_chunks: [2] },
+          { entity_id: "maa", type: "character", name: "Maa", user_perspective: "The practical one. Slightly disapproving of Papa's dreaming but deeply caring. She held the family together during the Bombay move.", emotional_charge: "positive", attributes: {}, mentioned_in_chunks: [2, 3] },
+          { entity_id: "haveli-lucknow", type: "place", name: "The Haveli in Lucknow", user_perspective: "Home. The smell of life. A place that meant safety and belonging.", emotional_charge: "positive", attributes: { city: "Lucknow", type: "ancestral home" }, mentioned_in_chunks: [1] },
+          { entity_id: "bombay-move", type: "event", name: "The Move to Bombay", user_perspective: "A rupture. Exciting but terrifying. Leaving behind everything familiar for the unknown.", emotional_charge: "complex", attributes: { year: "1992" }, mentioned_in_chunks: [3] },
+        ],
+        relationships: [
+          { from: "dadi-savitri", to: "papa", type: "mother-son", narrator_framing: "Dadi raised Papa with values but also expectations he quietly rebelled against through music" },
+          { from: "papa", to: "maa", type: "husband-wife", narrator_framing: "A loving but contrasting pair — he the dreamer, she the realist" },
+        ],
+        new_characters_this_chunk: ["dadi-savitri", "papa", "maa"],
+      };
+      console.log("[MOCK] E-Agent returning mock entities");
+    } else {
+      // REAL: Fetch context + call Claude
+      const [messagesResult, entityResult] = await Promise.all([
+        supabase
+          .from("context_messages")
+          .select("role, content, message_order")
+          .eq("session_id", session_id)
+          .order("message_order", { ascending: true }),
+        supabase
+          .from("entity_store")
+          .select("*")
+          .eq("session_id", session_id)
+          .single(),
+      ]);
 
-    const contextString = messages
-      .map((m: { role: string; content: string }) =>
-        `[${m.role.toUpperCase()}]: ${m.content}`
-      )
-      .join("\n\n");
+      const messages = messagesResult.data ?? [];
+      const existingEntities = entityResult.data;
 
-    // Build user message with existing entities as context
-    let userMessage = `Analyze this story transcript and extract all entities:\n\n${contextString}`;
-    if (existingEntities) {
-      userMessage += `\n\n--- EXISTING ENTITIES (enrich these, don't duplicate) ---\n${JSON.stringify(existingEntities.entities, null, 2)}`;
-      userMessage += `\n\n--- EXISTING RELATIONSHIPS ---\n${JSON.stringify(existingEntities.relationships, null, 2)}`;
+      const contextString = messages
+        .map((m: { role: string; content: string }) =>
+          `[${m.role.toUpperCase()}]: ${m.content}`
+        )
+        .join("\n\n");
+
+      let userMessage = `Analyze this story transcript and extract all entities:\n\n${contextString}`;
+      if (existingEntities) {
+        userMessage += `\n\n--- EXISTING ENTITIES (enrich these, don't duplicate) ---\n${JSON.stringify(existingEntities.entities, null, 2)}`;
+        userMessage += `\n\n--- EXISTING RELATIONSHIPS ---\n${JSON.stringify(existingEntities.relationships, null, 2)}`;
+      }
+
+      const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5-20250514",
+          max_tokens: 2048,
+          system: E_AGENT_SYSTEM_PROMPT,
+          messages: [{ role: "user", content: userMessage }],
+        }),
+      });
+
+      if (!claudeResponse.ok) {
+        const errText = await claudeResponse.text();
+        throw new Error(`Claude API error: ${errText}`);
+      }
+
+      const claudeResult = await claudeResponse.json();
+      parsed = parseClaudeJSON(claudeResult.content[0].text);
     }
 
-    // 2. Call Claude API
-    const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5-20250514",
-        max_tokens: 2048,
-        system: E_AGENT_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-      }),
-    });
-
-    if (!claudeResponse.ok) {
-      const errText = await claudeResponse.text();
-      throw new Error(`Claude API error: ${errText}`);
-    }
-
-    const claudeResult = await claudeResponse.json();
-    const rawText = claudeResult.content[0].text;
-    const parsed = parseClaudeJSON(rawText);
-
-    // 3. UPSERT entity_store
+    // UPSERT entity_store
     const { error: upsertError } = await supabase
       .from("entity_store")
       .upsert(

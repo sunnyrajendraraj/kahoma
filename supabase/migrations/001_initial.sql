@@ -4,7 +4,7 @@
 -- 1. SESSIONS
 CREATE TABLE sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid REFERENCES auth.users NOT NULL ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES auth.users ON DELETE CASCADE,
   title text DEFAULT 'My Story',
   status text DEFAULT 'recording',
   phase integer DEFAULT 1,
@@ -28,7 +28,7 @@ CREATE TABLE voice_chunks (
 -- 3. SENTIMENT_STORE (one row per session, always UPSERT)
 CREATE TABLE sentiment_store (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id uuid REFERENCES sessions UNIQUE ON DELETE CASCADE,
+  session_id uuid UNIQUE REFERENCES sessions ON DELETE CASCADE,
   sentiment text,
   tonality text,
   story_direction text,
@@ -41,7 +41,7 @@ CREATE TABLE sentiment_store (
 -- 4. ENTITY_STORE (one row per session, always UPSERT)
 CREATE TABLE entity_store (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id uuid REFERENCES sessions UNIQUE ON DELETE CASCADE,
+  session_id uuid UNIQUE REFERENCES sessions ON DELETE CASCADE,
   entities jsonb DEFAULT '[]',
   relationships jsonb DEFAULT '[]',
   raw_output jsonb DEFAULT '{}',
@@ -92,7 +92,7 @@ CREATE TABLE chapters (
 -- 8. BOOKS
 CREATE TABLE books (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id uuid REFERENCES sessions UNIQUE ON DELETE CASCADE,
+  session_id uuid UNIQUE REFERENCES sessions ON DELETE CASCADE,
   user_id uuid REFERENCES auth.users,
   pdf_url text,
   cover_title text,

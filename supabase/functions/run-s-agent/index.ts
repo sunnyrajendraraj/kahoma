@@ -60,57 +60,69 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY")!;
+    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
+    const MOCK_MODE = Deno.env.get("MOCK_MODE") === "true";
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Fetch all context messages
-    const { data: messages, error: msgError } = await supabase
-      .from("context_messages")
-      .select("role, content, message_order")
-      .eq("session_id", session_id)
-      .order("message_order", { ascending: true });
+    let parsed: Record<string, unknown>;
 
-    if (msgError) throw new Error(`Failed to fetch messages: ${msgError.message}`);
-
-    // Build context string
-    const contextString = (messages ?? [])
-      .map((m: { role: string; content: string }) =>
-        `[${m.role.toUpperCase()}]: ${m.content}`
-      )
-      .join("\n\n");
-
-    // 2. Call Claude API
-    const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5-20250514",
-        max_tokens: 1024,
-        system: S_AGENT_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: `Analyze this story transcript:\n\n${contextString}`,
-          },
+    if (MOCK_MODE) {
+      // MOCK: Return realistic sentiment analysis
+      parsed = {
+        sentiment: "nostalgic",
+        tonality: "warm with undercurrents of loss",
+        story_direction: "A family saga spanning generations, rooted in the narrator's deep love for their grandmother and the old haveli in Lucknow",
+        political_social_lens: "Post-partition India, middle-class family navigating modernization",
+        predicted_future: "The narrator will likely reveal a pivotal loss or separation that shaped their adult identity",
+        confidence: 78,
+        key_emotional_moments: [
+          "The description of grandmother Savitri standing near tulsi every morning",
+          "Father's harmonium evenings — a sacred ritual",
+          "The family's move to Bombay — loss of the familiar",
         ],
-      }),
-    });
+        narrator_current_emotional_state: "Reflective and tender, revisiting memories with love and a slight ache",
+      };
+      console.log("[MOCK] S-Agent returning mock sentiment");
+    } else {
+      // Fetch all context messages
+      const { data: messages, error: msgError } = await supabase
+        .from("context_messages")
+        .select("role, content, message_order")
+        .eq("session_id", session_id)
+        .order("message_order", { ascending: true });
 
-    if (!claudeResponse.ok) {
-      const errText = await claudeResponse.text();
-      throw new Error(`Claude API error: ${errText}`);
+      if (msgError) throw new Error(`Failed to fetch messages: ${msgError.message}`);
+
+      const contextString = (messages ?? [])
+        .map((m: { role: string; content: string }) =>
+          `[${m.role.toUpperCase()}]: ${m.content}`
+        )
+        .join("\n\n");
+
+      const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5-20250514",
+          max_tokens: 1024,
+          system: S_AGENT_SYSTEM_PROMPT,
+          messages: [{ role: "user", content: `Analyze this story transcript:\n\n${contextString}` }],
+        }),
+      });
+
+      if (!claudeResponse.ok) {
+        const errText = await claudeResponse.text();
+        throw new Error(`Claude API error: ${errText}`);
+      }
+
+      const claudeResult = await claudeResponse.json();
+      parsed = parseClaudeJSON(claudeResult.content[0].text);
     }
-
-    const claudeResult = await claudeResponse.json();
-    const rawText = claudeResult.content[0].text;
-
-    // 3. Parse JSON response
-    const parsed = parseClaudeJSON(rawText);
 
     // 4. UPSERT to sentiment_store
     const { error: upsertError } = await supabase

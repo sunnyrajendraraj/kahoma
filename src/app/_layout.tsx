@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../store/auth';
 
 export default function RootLayout() {
-  const { user, initialized, initialize } = useAuthStore();
-  const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const { user, initialized, onboarded, initialize } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -15,13 +13,6 @@ export default function RootLayout() {
   useEffect(() => {
     initialize();
   }, [initialize]);
-
-  // Check onboarding status
-  useEffect(() => {
-    AsyncStorage.getItem('kahoma_onboarded').then((val) => {
-      setOnboarded(val === 'true');
-    });
-  }, []);
 
   // Handle navigation based on auth state
   useEffect(() => {

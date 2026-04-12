@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuthStore } from '../store/auth';
 
 const { width } = Dimensions.get('window');
 
@@ -45,13 +45,14 @@ export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
+  const { completeOnboarding } = useAuthStore();
 
   const handleNext = async () => {
     if (currentIndex < slides.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
       // Complete onboarding
-      await AsyncStorage.setItem('kahoma_onboarded', 'true');
+      await completeOnboarding();
       router.replace('/(tabs)');
     }
   };

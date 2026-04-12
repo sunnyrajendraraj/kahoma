@@ -22,7 +22,8 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
+    const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
+    const MOCK_MODE = Deno.env.get("MOCK_MODE") === "true";
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -53,57 +54,67 @@ serve(async (req) => {
       .update({ whisper_status: "transcribing" })
       .eq("id", chunk_id);
 
-    // 3. Get signed URL for the audio file
-    const { data: signedData, error: signError } = await supabase.storage
-      .from("audio")
-      .createSignedUrl(chunk.audio_url, 600);
+    let transcript: string;
 
-    if (signError || !signedData?.signedUrl) {
-      await supabase
-        .from("voice_chunks")
-        .update({ whisper_status: "failed" })
-        .eq("id", chunk_id);
-      return new Response(JSON.stringify({ error: "Failed to get audio URL" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (MOCK_MODE) {
+      // MOCK: Return a realistic Hindi-English transcript instead of calling Whisper
+      const mockTranscripts = [
+        "Meri dadi ka naam Savitri tha. Woh Lucknow ke purane shehar mein rehti thi, ek haveli mein jismein zindagi ki khushbu basi rehti thi. She was the strongest woman I've ever known. Har subah woh tulsi ke paas khadi hoti thi, aur mujhe lagta tha ki duniya mein sab kuch theek hai.",
+        "Papa government job mein the, but unka asli pyaar music tha. Har raat ko woh harmonium bajate the, aur main unke paas baithkar sunta tha. Those evenings shaped everything I became. Maa kehti thi ki woh sapne zyada dekhte hain, lekin unhone mujhe sapne dekhna sikhaya.",
+        "1992 mein hum Bombay shift hue. Nayi jagah, naye log, sab kuch alag. I remember the smell of the sea, the sound of local trains. Papa ko naya kaam mil gaya tha aur Maa ne school dhoondna shuru kiya. It was scary but exciting — like starting a completely new chapter of life.",
+      ];
+      const chunkIndex = (chunk.chunk_order ?? 1) - 1;
+      transcript = mockTranscripts[chunkIndex % mockTranscripts.length];
+      console.log("[MOCK] Using mock transcript for chunk", chunk_id);
+    } else {
+      // REAL: Call Whisper API
+      const { data: signedData, error: signError } = await supabase.storage
+        .from("audio")
+        .createSignedUrl(chunk.audio_url, 600);
 
-    // 4. Download audio
-    const audioResponse = await fetch(signedData.signedUrl);
-    const audioBlob = await audioResponse.blob();
-
-    // 5. Send to Whisper API — no language param (auto-detect Hindi/English mix)
-    const formData = new FormData();
-    formData.append("file", audioBlob, "audio.m4a");
-    formData.append("model", "whisper-1");
-
-    const whisperResponse = await fetch(
-      "https://api.openai.com/v1/audio/transcriptions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${openaiKey}`,
-        },
-        body: formData,
+      if (signError || !signedData?.signedUrl) {
+        await supabase
+          .from("voice_chunks")
+          .update({ whisper_status: "failed" })
+          .eq("id", chunk_id);
+        return new Response(JSON.stringify({ error: "Failed to get audio URL" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-    );
 
-    if (!whisperResponse.ok) {
-      const errText = await whisperResponse.text();
-      console.error("Whisper API error:", errText);
-      await supabase
-        .from("voice_chunks")
-        .update({ whisper_status: "failed" })
-        .eq("id", chunk_id);
-      return new Response(JSON.stringify({ error: "Whisper transcription failed" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const audioResponse = await fetch(signedData.signedUrl);
+      const audioBlob = await audioResponse.blob();
+
+      const formData = new FormData();
+      formData.append("file", audioBlob, "audio.m4a");
+      formData.append("model", "whisper-1");
+
+      const whisperResponse = await fetch(
+        "https://api.openai.com/v1/audio/transcriptions",
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${openaiKey}` },
+          body: formData,
+        }
+      );
+
+      if (!whisperResponse.ok) {
+        const errText = await whisperResponse.text();
+        console.error("Whisper API error:", errText);
+        await supabase
+          .from("voice_chunks")
+          .update({ whisper_status: "failed" })
+          .eq("id", chunk_id);
+        return new Response(JSON.stringify({ error: "Whisper transcription failed" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const whisperResult = await whisperResponse.json();
+      transcript = whisperResult.text;
     }
-
-    const whisperResult = await whisperResponse.json();
-    const transcript = whisperResult.text;
 
     // 6. Update chunk with transcript
     await supabase

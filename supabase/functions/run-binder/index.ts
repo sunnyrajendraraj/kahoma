@@ -36,7 +36,8 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const pdfshiftKey = Deno.env.get("PDFSHIFT_API_KEY")!;
+    const pdfshiftKey = Deno.env.get("PDFSHIFT_API_KEY") ?? "";
+    const MOCK_MODE = Deno.env.get("MOCK_MODE") === "true";
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -180,49 +181,64 @@ ${chapters
 </body>
 </html>`;
 
-    // Call PDFShift API
-    const pdfshiftAuth = base64Encode(new TextEncoder().encode(`api:${pdfshiftKey}`));
-
-    const pdfResponse = await fetch(
-      "https://api.pdfshift.io/v3/convert/pdf",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${pdfshiftAuth}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          source: bookHtml,
-          sandbox: false,
-        }),
-      }
-    );
-
-    if (!pdfResponse.ok) {
-      const errText = await pdfResponse.text();
-      throw new Error(`PDFShift error: ${errText}`);
-    }
-
-    // Get PDF as ArrayBuffer
-    const pdfBuffer = await pdfResponse.arrayBuffer();
-    const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
-
-    // Upload to Supabase storage
-    const storagePath = `${session_id}/kahoma_book.pdf`;
-    const { error: uploadError } = await supabase.storage
-      .from("books")
-      .upload(storagePath, pdfBlob, {
-        contentType: "application/pdf",
-        upsert: true,
-      });
-
-    if (uploadError) throw new Error(`PDF upload failed: ${uploadError.message}`);
+    let storagePath: string;
+    let estimatedPages: number;
 
     // Estimate page count (~250 words per page)
     const totalWords = chapters.reduce((sum: number, ch: { content_written: string | null }) => {
       return sum + (ch.content_written?.split(/\s+/).length ?? 0);
     }, 0);
-    const estimatedPages = Math.max(chapters.length + 2, Math.ceil(totalWords / 250));
+    estimatedPages = Math.max(chapters.length + 2, Math.ceil(totalWords / 250));
+
+    if (MOCK_MODE) {
+      // MOCK: Upload the HTML directly as the book (skip PDFShift)
+      console.log("[MOCK] Binder uploading HTML book (skipping PDF conversion)");
+      storagePath = `${session_id}/kahoma_book.html`;
+      const htmlBlob = new Blob([bookHtml], { type: "text/html" });
+      const { error: uploadError } = await supabase.storage
+        .from("books")
+        .upload(storagePath, htmlBlob, {
+          contentType: "text/html",
+          upsert: true,
+        });
+      if (uploadError) throw new Error(`HTML upload failed: ${uploadError.message}`);
+    } else {
+      // REAL: Call PDFShift API
+      const pdfshiftAuth = base64Encode(new TextEncoder().encode(`api:${pdfshiftKey}`));
+
+      const pdfResponse = await fetch(
+        "https://api.pdfshift.io/v3/convert/pdf",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${pdfshiftAuth}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            source: bookHtml,
+            sandbox: false,
+          }),
+        }
+      );
+
+      if (!pdfResponse.ok) {
+        const errText = await pdfResponse.text();
+        throw new Error(`PDFShift error: ${errText}`);
+      }
+
+      const pdfBuffer = await pdfResponse.arrayBuffer();
+      const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
+
+      storagePath = `${session_id}/kahoma_book.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from("books")
+        .upload(storagePath, pdfBlob, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
+
+      if (uploadError) throw new Error(`PDF upload failed: ${uploadError.message}`);
+    }
 
     // Update book record
     await supabase

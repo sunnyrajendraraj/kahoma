@@ -53,7 +53,7 @@ export default function HomeScreen() {
       <View style={styles.container}>
         <View style={styles.emptyState}>
           <Ionicons
-            name="feather"
+            name="pencil-outline"
             size={64}
             color="#C9933A"
             style={styles.emptyIcon}
