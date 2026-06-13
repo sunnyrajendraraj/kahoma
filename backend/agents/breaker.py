@@ -2,42 +2,50 @@
 Breaker Agent.
 Structures the story into chapters — emotionally resonant, not necessarily chronological.
 Thinks like Premchand, Amrita Pritam, Dharmveer Bharati.
+Uses native Pydantic structured outputs.
 """
 
 import logging
 import json
-from typing import Any
+from typing import Any, List, Optional
+from pydantic import BaseModel, Field
 
 from config import get_settings
-from core.gemini_client import call_gemini_json
+from core.gemini_client import call_gemini_structured
 from core.supabase_client import get_supabase
 from core.audit import log_event
 
 logger = logging.getLogger(__name__)
 
+
+class Chapter(BaseModel):
+    """Pydantic model representing a structured book chapter."""
+
+    chapter_number: int = Field(description="Sequential index of the chapter starting from 1")
+    title: str = Field(description="Evocative, literary chapter title")
+    era: str = Field(description="The era or decade, e.g. '1960s', '1982'")
+    primary_location: str = Field(description="The main city or geographic setting of the chapter")
+    primary_character: str = Field(description="The central figure besides the narrator in this chapter")
+    emotional_arc: str = Field(description="Transition of feelings (e.g. warmth -> longing)")
+    relevant_transcript_sections: List[str] = Field(description="Specific excerpts or segments from the transcript relevant to this chapter")
+    image_concept: str = Field(description="Detailed prompt for generating the chapter's illustration")
+
+
+class BreakerResult(BaseModel):
+    """Pydantic model representing the overall Breaker output structure."""
+
+    book_title: str = Field(description="Evocative 4-6 word book title")
+    book_subtitle: Optional[str] = Field(default=None, description="Bitter-sweet or poetic subtitle")
+    narrative_structure: str = Field(description="Description of the ordering style used (thematic, chronological, emotional)")
+    chapters: List[Chapter] = Field(description="List of structured chapters")
+    total_chapters: int = Field(description="Total number of chapters")
+
+
 BREAKER_SYSTEM_PROMPT = """You are the Breaker Agent. Think like India's greatest storytellers:
 Premchand, Amrita Pritam, Dharmveer Bharati.
 You receive the full Bible (sentiment + entities + transcript).
 Divide the story into optimal chapters — NOT necessarily chronological.
-Find the order that creates the most emotionally resonant book.
-Respond with ONLY valid JSON:
-{
-  "book_title": string (evocative, 4-6 words),
-  "book_subtitle": string or null,
-  "narrative_structure": string,
-  "chapters": [{
-    "chapter_number": integer,
-    "title": string (literary, not descriptive),
-    "era": string,
-    "primary_location": string,
-    "primary_character": string,
-    "emotional_arc": string,
-    "relevant_transcript_sections": string[],
-    "image_concept": string
-  }],
-  "total_chapters": integer
-}
-Each chapter title should make a reader stop at a bookshop."""
+Find the order that creates the most emotionally resonant book."""
 
 MOCK_BREAKER_OUTPUT: dict[str, Any] = {
     "book_title": "The Haveli on Residency Road",
@@ -143,11 +151,13 @@ async def run_breaker(session_id: str) -> dict[str, Any]:
             bible_text += f"\n\n--- ENTITIES ---\n{json.dumps(entities.get('entities', []), indent=2)}"
             bible_text += f"\n\n--- RELATIONSHIPS ---\n{json.dumps(entities.get('relationships', []), indent=2)}"
 
-        parsed = await call_gemini_json(
+        structured_response = await call_gemini_structured(
             BREAKER_SYSTEM_PROMPT,
             f"Here is the complete Bible for this story. Structure the optimal book:\n\n{bible_text}",
+            response_schema=BreakerResult,
             max_tokens=4096,
         )
+        parsed = structured_response.model_dump()
 
     chapters = parsed.get("chapters", [])
 

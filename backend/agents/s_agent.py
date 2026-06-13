@@ -1,31 +1,38 @@
 """
 S-Agent (Sentiment Analysis Agent).
 Analyzes the emotional landscape of the narrator's story.
+Uses native Pydantic structured outputs.
 """
 
 import logging
-from typing import Any
+from typing import Any, List, Optional
+from pydantic import BaseModel, Field
 
 from config import get_settings
-from core.gemini_client import call_gemini_json
+from core.gemini_client import call_gemini_structured
 from core.supabase_client import get_supabase
 from core.audit import log_event
 
 logger = logging.getLogger(__name__)
 
+
+class SentimentResult(BaseModel):
+    """Pydantic model for S-Agent sentiment analysis output."""
+
+    sentiment: str = Field(description="The primary emotional tone of the narrator's story")
+    tonality: str = Field(description="Subtle nuances or variations in tone (e.g., warm, melancholy)")
+    story_direction: str = Field(description="Narrative arc or summary of story path")
+    political_social_lens: Optional[str] = Field(
+        default=None, description="Any political or social context mentioned or implied"
+    )
+    predicted_future: str = Field(description="Predicted direction of narrator's future story topics")
+    confidence: int = Field(ge=0, le=100, description="Confidence score (0-100) of the analysis")
+    key_emotional_moments: List[str] = Field(description="List of emotionally charged moments in the transcript")
+    narrator_current_emotional_state: str = Field(description="Narrator's current emotional state during recording")
+
+
 S_AGENT_SYSTEM_PROMPT = """You are the Sentiment Analysis Agent for Kahoma, a memoir platform.
 Analyze the narrator's full transcript and extract the emotional landscape.
-Respond with ONLY valid JSON, no other text:
-{
-  "sentiment": string,
-  "tonality": string,
-  "story_direction": string,
-  "political_social_lens": string or null,
-  "predicted_future": string,
-  "confidence": integer (0-100),
-  "key_emotional_moments": string[],
-  "narrator_current_emotional_state": string
-}
 The narrator is the supreme authority on their own story. Never judge. Always understand."""
 
 MOCK_SENTIMENT: dict[str, Any] = {
@@ -49,7 +56,7 @@ async def run_s_agent(session_id: str) -> dict[str, Any]:
     Run sentiment analysis on a session's transcript.
     UPSERTs the result into sentiment_store.
 
-    Returns the parsed sentiment output.
+    Returns the parsed sentiment output as a dictionary.
     """
     settings = get_settings()
     sb = get_supabase()
@@ -72,11 +79,13 @@ async def run_s_agent(session_id: str) -> dict[str, Any]:
             f"[{m['role'].upper()}]: {m['content']}" for m in messages
         )
 
-        parsed = await call_gemini_json(
+        structured_response = await call_gemini_structured(
             S_AGENT_SYSTEM_PROMPT,
             f"Analyze this story transcript:\n\n{context_string}",
+            response_schema=SentimentResult,
             max_tokens=1024,
         )
+        parsed = structured_response.model_dump()
 
     # UPSERT to sentiment_store
     sb.table("sentiment_store").upsert(

@@ -2,18 +2,43 @@
 Evaluator Agent.
 Scores story understanding 0-100 across 5 dimensions.
 Decides whether to acknowledge the narrator or ask a clarifying question.
+Uses native Pydantic structured outputs.
 """
 
 import logging
-from typing import Any
+from typing import Any, List, Optional, Literal
 import json
+from pydantic import BaseModel, Field
 
 from config import get_settings
-from core.gemini_client import call_gemini_json
+from core.gemini_client import call_gemini_structured
 from core.supabase_client import get_supabase
 from core.audit import log_event
 
 logger = logging.getLogger(__name__)
+
+
+class DimensionScores(BaseModel):
+    """Pydantic model representing sub-scores of the evaluation."""
+
+    entity_completeness: int = Field(ge=0, le=25, description="Score for entity completeness (out of 25)")
+    relationship_clarity: int = Field(ge=0, le=20, description="Score for relationship clarity (out of 20)")
+    sentiment_confidence: int = Field(ge=0, le=20, description="Score for sentiment confidence (out of 20)")
+    perspective_accuracy: int = Field(ge=0, le=20, description="Score for perspective accuracy (out of 20)")
+    story_coherence: int = Field(ge=0, le=15, description="Score for story coherence (out of 15)")
+
+
+class EvaluatorResult(BaseModel):
+    """Pydantic model representing the evaluation outcome."""
+
+    overall_score: int = Field(ge=0, le=100, description="Overall understanding score, sum of dimensions (out of 100)")
+    dimension_scores: DimensionScores = Field(description="Individual dimension scores")
+    decision: Literal["acknowledge", "ask"] = Field(description="Decision on whether to ask a clarifying question or acknowledge")
+    gaps: List[str] = Field(description="Identified gaps in the story understanding")
+    question_to_ask: Optional[str] = Field(default=None, description="The specific clarifying question to ask the user, if decision is 'ask'")
+    catastrophic_gap: bool = Field(description="True if there is a severe gap preventing any story understanding")
+    new_characters_needing_photo: List[str] = Field(description="Entity IDs of newly identified characters that need photos")
+
 
 EVALUATOR_SYSTEM_PROMPT = """You are the Evaluator Agent for Kahoma.
 Score story understanding 0-100:
@@ -23,17 +48,7 @@ Score story understanding 0-100:
 - Perspective accuracy: 20pts
 - Story coherence: 15pts
 Threshold: 80. Below 80 = ask ONE specific question. Above 80 = acknowledge.
-If a key character's identity is ambiguous in a story-changing way: always ask regardless of score.
-Respond with ONLY valid JSON:
-{
-  "overall_score": integer,
-  "dimension_scores": { "entity_completeness": int, "relationship_clarity": int, "sentiment_confidence": int, "perspective_accuracy": int, "story_coherence": int },
-  "decision": "acknowledge"|"ask",
-  "gaps": string[],
-  "question_to_ask": string or null,
-  "catastrophic_gap": boolean,
-  "new_characters_needing_photo": string[]
-}"""
+If a key character's identity is ambiguous in a story-changing way: always ask regardless of score."""
 
 MOCK_ASK: dict[str, Any] = {
     "overall_score": 65,
@@ -133,11 +148,13 @@ async def run_evaluator(session_id: str) -> dict[str, Any]:
         if entities:
             user_message += f"\n\n--- E-AGENT OUTPUT ---\nEntities: {json.dumps(entities.get('entities', []), indent=2)}\nRelationships: {json.dumps(entities.get('relationships', []), indent=2)}"
 
-        parsed = await call_gemini_json(
+        structured_response = await call_gemini_structured(
             EVALUATOR_SYSTEM_PROMPT,
             user_message,
+            response_schema=EvaluatorResult,
             max_tokens=1024,
         )
+        parsed = structured_response.model_dump()
 
     # Audit log
     await log_event(

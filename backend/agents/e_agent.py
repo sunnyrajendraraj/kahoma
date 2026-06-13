@@ -1,41 +1,58 @@
 """
 E-Agent (Entity Extraction Agent).
 Extracts characters, places, events, relationships — preserving the narrator's perspective.
+Uses native Pydantic structured outputs.
 """
 
 import logging
-from typing import Any
+from typing import Any, Dict, List, Literal, Optional
+from pydantic import BaseModel, Field
 
 from config import get_settings
-from core.gemini_client import call_gemini_json
+from core.gemini_client import call_gemini_structured
 from core.supabase_client import get_supabase
 from core.audit import log_event
 
 logger = logging.getLogger(__name__)
 
+
+class Entity(BaseModel):
+    """Pydantic model representing an extracted entity."""
+
+    entity_id: str = Field(description="Slug or identifier for the entity, e.g. 'dadi-savitri'")
+    type: Literal["character", "event", "place", "era", "object"] = Field(description="The type of entity")
+    name: str = Field(description="Display name of the entity")
+    user_perspective: str = Field(description="Narration-focused description of what this entity means to the narrator")
+    emotional_charge: Literal["positive", "negative", "complex", "neutral"] = Field(description="Narrator's emotional association with the entity")
+    attributes: Dict[str, Any] = Field(default_factory=dict, description="Metadata attributes like birth_era, city, occupation")
+    mentioned_in_chunks: List[int] = Field(default_factory=list, description="Array of chunk indices where mentioned")
+
+
+class Relationship(BaseModel):
+    """Pydantic model representing a relationship between two entities."""
+
+    from_: str = Field(alias="from", description="entity_id of source entity")
+    to: str = Field(description="entity_id of target entity")
+    type: str = Field(description="Type of relationship, e.g. 'mother-son'")
+    narrator_framing: str = Field(description="Narrator's specific perspective on the relationship")
+
+    model_config = {
+        "populate_by_name": True,
+    }
+
+
+class EntityExtractionResult(BaseModel):
+    """Pydantic model for E-Agent entity extraction output."""
+
+    entities: List[Entity] = Field(description="List of all extracted entities")
+    relationships: List[Relationship] = Field(description="List of all relationships between entities")
+    new_characters_this_chunk: List[str] = Field(description="List of entity_ids of newly identified characters in this chunk")
+
+
 E_AGENT_SYSTEM_PROMPT = """You are the Entity Extraction Agent for Kahoma.
 Extract ALL entities and capture THE NARRATOR'S PERSPECTIVE on each — not objective reality.
 A grandmother can be loving OR cruel. A success can feel like failure.
 Always capture what entities MEAN to THIS narrator.
-Respond with ONLY valid JSON:
-{
-  "entities": [{
-    "entity_id": string (slug e.g. "dadi-1"),
-    "type": "character"|"event"|"place"|"era"|"object",
-    "name": string,
-    "user_perspective": string (MOST IMPORTANT FIELD),
-    "emotional_charge": "positive"|"negative"|"complex"|"neutral",
-    "attributes": {},
-    "mentioned_in_chunks": number[]
-  }],
-  "relationships": [{
-    "from": string,
-    "to": string,
-    "type": string,
-    "narrator_framing": string
-  }],
-  "new_characters_this_chunk": string[]
-}
 Merge with existing entities — enrich, never duplicate."""
 
 MOCK_ENTITIES: dict[str, Any] = {
@@ -145,14 +162,18 @@ async def run_e_agent(session_id: str) -> dict[str, Any]:
         user_message = f"Analyze this story transcript and extract all entities:\n\n{context_string}"
         if existing_entities:
             import json
+
             user_message += f"\n\n--- EXISTING ENTITIES (enrich these, don't duplicate) ---\n{json.dumps(existing_entities.get('entities', []), indent=2)}"
             user_message += f"\n\n--- EXISTING RELATIONSHIPS ---\n{json.dumps(existing_entities.get('relationships', []), indent=2)}"
 
-        parsed = await call_gemini_json(
+        structured_response = await call_gemini_structured(
             E_AGENT_SYSTEM_PROMPT,
             user_message,
+            response_schema=EntityExtractionResult,
             max_tokens=2048,
         )
+        # We model_dump by_alias=True to preserve the "from" name in output JSON
+        parsed = structured_response.model_dump(by_alias=True)
 
     # UPSERT entity_store
     sb.table("entity_store").upsert(
