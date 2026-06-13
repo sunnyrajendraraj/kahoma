@@ -52,7 +52,7 @@ sequenceDiagram
     participant Eval as Evaluator
     participant Clar as Clarification
     participant P2 as generate_book (Phase 2)
-    participant Break as Breaker (Chapters)
+    participant ChBreak as Breaker (Chapters)
     participant Write as Proxy Writer
     participant Pic as Picasso (SDXL)
     participant Bind as Binder (Typeset)
@@ -73,8 +73,8 @@ sequenceDiagram
 
     Note over User, Bind: Phase 2: Memoir Publication
     User->>P2: Trigger Publishing ("That's my story")
-    P2->>Break: Partition Story Bible into chapters
-    Break-->>P2: Chapter outlines & Image concepts
+    P2->>ChBreak: Partition Story Bible into chapters
+    ChBreak-->>P2: Chapter outlines & Image concepts
     loop For each Chapter
         P2->>Write: Write 700-word prose (1st Person)
         Write-->>P2: Written text
