@@ -6,6 +6,15 @@
 
 ---
 
+## ✦ Live Production Endpoints
+
+*   **Next.js Web Application:** [web-eight-sepia-qpmb3ekh7d.vercel.app](https://web-eight-sepia-qpmb3ekh7d.vercel.app)
+*   **FastAPI API Base Service:** [backend-phi-five-39.vercel.app](https://backend-phi-five-39.vercel.app)
+*   **API Swagger Docs:** [backend-phi-five-39.vercel.app/docs](https://backend-phi-five-39.vercel.app/docs)
+*   **System Health Monitor:** [backend-phi-five-39.vercel.app/health](https://backend-phi-five-39.vercel.app/health)
+
+---
+
 ## ✦ System Architecture
 
 ```mermaid
