@@ -2,6 +2,7 @@
 
 # dependencies
 node_modules/
+/web/node_modules/
 
 # Expo
 .expo/
@@ -31,7 +32,12 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.local
 .env*.local
+*.env
+backend/.env
+web/.env.local
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +45,18 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+backend/__pycache__/
+backend/.venv/
+
+# Next.js & Vercel
+.next/
+web/.next/
+.vercel/
+web/.vercel/
+

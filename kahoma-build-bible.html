@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kahoma — The Complete Zero-to-Ship Build Bible</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Mono:wght@300;400;500&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #050508;
+  --deep: #0a0a0f;
+  --surface: #10101a;
+  --card: #141420;
+  --card2: #191928;
+  --border: rgba(255,255,255,0.055);
+  --border2: rgba(255,255,255,0.11);
+  --border3: rgba(255,255,255,0.2);
+
+  --amber: #e8a020;
+  --amber-l: #f5c842;
+  --amber-d: rgba(232,160,32,0.1);
+  --amber-g: rgba(232,160,32,0.25);
+
+  --crimson: #c0392b;
+  --crimson-l: #e05040;
+  --crimson-d: rgba(192,57,43,0.1);
+
+  --teal: #1a9e8a;
+  --teal-l: #2dd4b8;
+  --teal-d: rgba(26,158,138,0.1);
+
+  --violet: #7c4dff;
+  --violet-l: #a57eff;
+  --violet-d: rgba(124,77,255,0.1);
+
+  --sage: #4a8c5c;
+  --sage-l: #6ab87a;
+  --sage-d: rgba(74,140,92,0.1);
+
+  --text: #ede9e0;
+  --soft: #8a8070;
+  --muted: #4a4535;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; font-size:16px; }
+
+body {
+  background: var(--void);
+  color: var(--text);
+  font-family: 'Manrope', sans-serif;
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+/* GRAIN */
+body::after {
+  content:'';
+  position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  opacity:0.7;
+}
+
+#prog { position:fixed; top:0; left:0; height:2px; z-index:10001; background:linear-gradient(90deg,var(--amber),var(--crimson),var(--teal)); width:0%; box-shadow:0 0 10px var(--amber-g); }
+
+/* NAV */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  background:rgba(5,5,8,0.92); backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border); height:52px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 48px;
+}
+.nav-logo {
+  font-family:'Cormorant Garamond', serif;
+  font-weight:700; font-size:20px; letter-spacing:0.04em;
+  color:var(--amber);
+}
+.nav-logo span { color:var(--soft); font-weight:400; font-style:italic; font-size:14px; margin-left:8px; }
+.nav-links { display:flex; list-style:none; }
+.nav-links a {
+  font-family:'DM Mono', monospace; font-size:9px;
+  letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--muted); text-decoration:none;
+  padding:0 14px; height:52px; display:flex; align-items:center;
+  border-right:1px solid var(--border); transition:color 0.2s, background 0.2s;
+}
+.nav-links a:hover { color:var(--amber); background:var(--amber-d); }
+.nav-links li:first-child a { border-left:1px solid var(--border); }
+
+/* ══ HERO ══ */
+.hero {
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:100px 48px 80px; text-align:center; position:relative; overflow:hidden;
+}
+.hero-bg {
+  position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 900px 600px at 50% 40%, rgba(232,160,32,0.04) 0%, transparent 70%),
+    repeating-linear-gradient(0deg, transparent, transparent 63px, rgba(232,160,32,0.025) 63px, rgba(232,160,32,0.025) 64px),
+    repeating-linear-gradient(90deg, transparent, transparent 63px, rgba(232,160,32,0.025) 63px, rgba(232,160,32,0.025) 64px);
+}
+.hero-eyebrow {
+  font-family:'DM Mono', monospace; font-size:10px;
+  letter-spacing:0.35em; text-transform:uppercase;
+  color:var(--amber); background:var(--amber-d);
+  border:1px solid rgba(232,160,32,0.2);
+  padding:7px 22px; display:inline-block; margin-bottom:40px;
+  animation: rise 0.9s cubic-bezier(0.16,1,0.3,1) both;
+}
+.hero h1 {
+  font-family:'Cormorant Garamond', serif;
+  font-weight:700; font-size:clamp(56px,10vw,120px);
+  line-height:0.9; letter-spacing:-0.01em; margin-bottom:12px;
+  animation: rise 0.9s cubic-bezier(0.16,1,0.3,1) 0.08s both;
+}
+.hero h1 .k { color:var(--amber); }
+.hero h1 em { font-style:italic; color:var(--soft); font-size:0.45em; letter-spacing:0.04em; display:block; margin-top:8px; }
+.hero-sub {
+  font-family:'DM Mono', monospace; font-size:12px;
+  color:var(--soft); max-width:600px; margin:24px auto 52px;
+  line-height:2; animation: rise 0.9s cubic-bezier(0.16,1,0.3,1) 0.16s both;
+}
+.hero-stats {
+  display:flex; gap:0; flex-wrap:wrap; justify-content:center;
+  border:1px solid var(--border2); border-radius:6px; overflow:hidden;
+  max-width:740px;
+  animation: rise 0.9s cubic-bezier(0.16,1,0.3,1) 0.24s both;
+}
+.hs { flex:1; min-width:130px; padding:20px; text-align:center; border-right:1px solid var(--border); }
+.hs:last-child { border-right:none; }
+.hs-n { font-family:'Cormorant Garamond', serif; font-weight:700; font-size:30px; display:block; line-height:1; margin-bottom:5px; }
+.hs-l { font-family:'DM Mono', monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
+
+/* ══ PHASE BANNER ══ */
+.phase-banner {
+  padding:72px 0 0;
+  border-top:1px solid var(--border);
+}
+.pb-inner { max-width:960px; margin:0 auto; padding:0 48px; }
+.pb-pre {
+  font-family:'DM Mono', monospace; font-size:9px;
+  letter-spacing:0.3em; text-transform:uppercase;
+  color:var(--muted); display:block; margin-bottom:14px;
+}
+.pb-title {
+  font-family:'Cormorant Garamond', serif; font-weight:700;
+  font-size:clamp(36px,6vw,68px); line-height:1.0; letter-spacing:-0.01em; margin-bottom:16px;
+}
+.pb-desc {
+  font-family:'DM Mono', monospace; font-size:12px;
+  color:var(--soft); max-width:660px; line-height:1.9; margin-bottom:32px;
+}
+.pb-rule { height:2px; width:56px; border-radius:2px; margin-bottom:0; }
+
+/* ══ LAYOUT ══ */
+.wrap { max-width:960px; margin:0 auto; padding:0 48px; }
+section { padding:52px 0; border-bottom:1px solid var(--border); }
+section:last-child { border-bottom:none; }
+
+h2 {
+  font-family:'Manrope', sans-serif; font-weight:700;
+  font-size:17px; letter-spacing:-0.01em; margin-bottom:22px;
+  display:flex; align-items:center; gap:12px;
+}
+.chip {
+  font-family:'DM Mono', monospace; font-size:9px;
+  letter-spacing:0.18em; text-transform:uppercase; padding:4px 10px; border-radius:3px;
+}
+.ca { background:var(--amber-d); color:var(--amber); border:1px solid rgba(232,160,32,0.2); }
+.cc { background:var(--crimson-d); color:var(--crimson-l); border:1px solid rgba(192,57,43,0.2); }
+.ct { background:var(--teal-d); color:var(--teal-l); border:1px solid rgba(26,158,138,0.2); }
+.cv { background:var(--violet-d); color:var(--violet-l); border:1px solid rgba(124,77,255,0.2); }
+.cs { background:var(--sage-d); color:var(--sage-l); border:1px solid rgba(74,140,92,0.2); }
+.cg { background:rgba(139,128,112,0.1); color:var(--soft); border:1px solid rgba(139,128,112,0.15); }
+
+h3 { font-family:'Manrope', sans-serif; font-weight:600; font-size:15px; margin:30px 0 12px; color:var(--text); }
+p { color:var(--soft); font-size:14px; margin-bottom:16px; line-height:1.85; }
+p strong { color:var(--text); font-weight:600; }
+
+/* ══ PROMPT ══ */
+.prompt {
+  background:#040407; border:1px solid rgba(232,160,32,0.18);
+  border-radius:8px; padding:30px 34px; margin:24px 0;
+  font-family:'DM Mono', monospace; font-size:12px; line-height:2;
+  color:#d4c8a8; white-space:pre-wrap; word-break:break-word;
+  position:relative;
+}
+.pl { position:absolute; top:-11px; left:18px; background:#040407; padding:0 10px; font-size:9px; letter-spacing:0.22em; text-transform:uppercase; color:var(--amber); border:1px solid rgba(232,160,32,0.2); border-radius:3px; font-family:'DM Mono', monospace; }
+.pw { position:absolute; top:10px; right:14px; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); background:var(--surface); padding:3px 8px; border-radius:3px; border:1px solid var(--border); font-family:'DM Mono', monospace; }
+.prompt .ph { color:#3a3020; font-style:italic; }
+.prompt .hl { color:var(--amber-l); font-weight:500; }
+.prompt .gr { color:#3a6040; }
+.prompt .kw { color:var(--teal-l); }
+.prompt .cm { color:#3a3530; }
+
+/* ══ AGENT DIAGRAM ══ */
+.agent-grid {
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
+  gap:1px; background:var(--border); border:1px solid var(--border2);
+  border-radius:8px; overflow:hidden; margin:24px 0;
+}
+.agent-card {
+  background:var(--card); padding:24px 22px;
+  transition:background 0.2s;
+}
+.agent-card:hover { background:var(--card2); }
+.agent-icon { font-size:24px; margin-bottom:10px; display:block; }
+.agent-name {
+  font-family:'DM Mono', monospace; font-size:10px;
+  letter-spacing:0.2em; text-transform:uppercase; margin-bottom:8px;
+}
+.agent-role { font-size:13px; color:var(--soft); line-height:1.6; }
+.agent-input { font-family:'DM Mono', monospace; font-size:10px; color:var(--muted); margin-top:10px; }
+
+/* ══ FLOW ══ */
+.flow { border:1px solid var(--border2); border-radius:8px; overflow:hidden; margin:22px 0; }
+.flow-row { display:flex; align-items:stretch; border-bottom:1px solid var(--border); }
+.flow-row:last-child { border-bottom:none; }
+.flow-n { width:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:15px; background:var(--surface); border-right:1px solid var(--border); }
+.flow-body { padding:16px 22px; flex:1; }
+.flow-t { font-weight:600; font-size:14px; color:var(--text); margin-bottom:3px; }
+.flow-d { font-family:'DM Mono', monospace; font-size:11px; color:var(--muted); line-height:1.7; }
+.flow-tag { display:inline-block; font-family:'DM Mono', monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; padding:2px 8px; border-radius:3px; margin-right:5px; margin-top:5px; }
+
+/* ══ CALLOUT ══ */
+.callout { border-radius:6px; padding:20px 24px; margin:22px 0; }
+.co-a { background:var(--amber-d); border-left:3px solid var(--amber); }
+.co-c { background:var(--crimson-d); border-left:3px solid var(--crimson); }
+.co-t { background:var(--teal-d); border-left:3px solid var(--teal); }
+.co-v { background:var(--violet-d); border-left:3px solid var(--violet); }
+.co-s { background:var(--sage-d); border-left:3px solid var(--sage); }
+.co-hd { font-family:'DM Mono', monospace; font-size:9px; letter-spacing:0.2em; text-transform:uppercase; display:block; margin-bottom:8px; }
+.hd-a { color:var(--amber); }
+.hd-c { color:var(--crimson-l); }
+.hd-t { color:var(--teal-l); }
+.hd-v { color:var(--violet-l); }
+.hd-s { color:var(--sage-l); }
+.callout p { font-size:13.5px; margin-bottom:0; }
+
+/* ══ STEPS ══ */
+.steps { list-style:none; padding:0; margin:22px 0; }
+.steps li { display:flex; gap:18px; margin-bottom:20px; align-items:flex-start; }
+.sn { font-family:'DM Mono', monospace; font-size:10px; width:34px; height:34px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:5px; margin-top:2px; }
+.sna { background:var(--amber-d); color:var(--amber); border:1px solid rgba(232,160,32,0.2); }
+.snc { background:var(--crimson-d); color:var(--crimson-l); border:1px solid rgba(192,57,43,0.2); }
+.snt { background:var(--teal-d); color:var(--teal-l); border:1px solid rgba(26,158,138,0.2); }
+.snv { background:var(--violet-d); color:var(--violet-l); border:1px solid rgba(124,77,255,0.2); }
+.sns { background:var(--sage-d); color:var(--sage-l); border:1px solid rgba(74,140,92,0.2); }
+.step-body { flex:1; }
+.step-t { font-weight:600; font-size:15px; color:var(--text); margin-bottom:3px; }
+.step-d { font-size:12px; color:var(--muted); font-family:'DM Mono', monospace; line-height:1.7; }
+
+/* ══ TABLE ══ */
+.tw { overflow-x:auto; margin:22px 0; border-radius:6px; border:1px solid var(--border2); }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { font-family:'DM Mono', monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; padding:12px 16px; text-align:left; background:var(--surface); color:var(--muted); border-bottom:1px solid var(--border2); }
+td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--soft); }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,0.015); }
+.ta { color:var(--amber); font-family:'DM Mono', monospace; font-size:11px; }
+.tc { color:var(--crimson-l); font-family:'DM Mono', monospace; font-size:11px; }
+.tt { color:var(--teal-l); font-family:'DM Mono', monospace; font-size:11px; }
+
+/* ══ SCHEMA ══ */
+.schema { background:#03030a; border:1px solid rgba(124,77,255,0.18); border-radius:8px; padding:26px 30px; margin:20px 0; font-family:'DM Mono', monospace; font-size:12px; line-height:2; color:#b8a8d8; }
+.s-t { color:#d8b8f8; font-weight:500; }
+.s-c { color:#f8c8e8; }
+.s-y { color:#a8f8e8; }
+.s-n { color:#2a2030; font-style:italic; }
+
+/* ══ CHECKLIST ══ */
+.checklist { list-style:none; padding:0; margin:16px 0; }
+.checklist li { display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; font-size:13.5px; color:var(--soft); font-family:'DM Mono', monospace; line-height:1.7; }
+.ck { flex-shrink:0; margin-top:1px; font-size:12px; }
+.ck-a { color:var(--amber); }
+.ck-t { color:var(--teal-l); }
+.ck-c { color:var(--crimson-l); }
+
+/* ══ COST ══ */
+.cost-box { background:var(--card); border:1px solid var(--border2); border-radius:8px; overflow:hidden; margin:22px 0; }
+.cost-row { display:flex; justify-content:space-between; align-items:center; padding:12px 18px; border-bottom:1px solid var(--border); }
+.cost-row:last-child { border-bottom:none; }
+.cost-row.total { background:var(--amber-d); border-top:1px solid var(--amber-g); }
+.cost-l { font-size:13px; color:var(--soft); }
+.cost-v { font-family:'DM Mono', monospace; font-size:12px; color:var(--teal-l); }
+.cost-row.total .cost-l { color:var(--text); font-weight:700; font-family:'Manrope', sans-serif; }
+.cost-row.total .cost-v { color:var(--amber); font-size:16px; font-weight:700; }
+
+/* ══ BIBLE BOX ══ */
+.bible-box {
+  background:linear-gradient(135deg, #06060e, #0c0c18);
+  border:2px solid rgba(232,160,32,0.28); border-radius:10px;
+  padding:32px 36px; margin:28px 0; position:relative; overflow:hidden;
+}
+.bible-box::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at top left, rgba(232,160,32,0.04), transparent 60%); pointer-events:none; }
+.bible-label { font-family:'DM Mono', monospace; font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--amber); margin-bottom:14px; display:block; }
+
+/* ══ REVEAL ══ */
+.reveal { opacity:0; transform:translateY(16px); transition:opacity 0.6s ease, transform 0.6s ease; }
+.reveal.on { opacity:1; transform:translateY(0); }
+
+/* ══ FOOTER ══ */
+footer { background:var(--deep); border-top:1px solid var(--border); padding:60px 48px; text-align:center; }
+footer h2 { font-family:'Cormorant Garamond', serif; font-weight:700; font-size:clamp(32px,4vw,52px); letter-spacing:-0.01em; margin-bottom:12px; display:block; line-height:1.1; }
+footer p { font-family:'DM Mono', monospace; font-size:11px; color:var(--muted); }
+
+@keyframes rise { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+@media(max-width:768px) { nav { padding:0 20px; } .nav-links { display:none; } .wrap { padding:0 20px; } .hero { padding:90px 20px 60px; } .pb-inner { padding:0 20px; } footer { padding:48px 20px; } .prompt { padding:22px 18px; } }
+</style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav>
+  <span class="nav-logo">Kahoma <span>— The Complete Build Bible</span></span>
+  <ul class="nav-links">
+    <li><a href="#laws">Laws</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#foundation">Foundation</a></li>
+    <li><a href="#phase1agents">Phase 1 Agents</a></li>
+    <li><a href="#phase2agents">Phase 2 Agents</a></li>
+    <li><a href="#app">App</a></li>
+    <li><a href="#ship">Ship</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════ HERO ══════════ -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div style="position:relative;z-index:1">
+    <div class="hero-eyebrow">Zero-to-Ship · Complete Action Plan · Blind-Follow Edition</div>
+    <h1><span class="k">Ka</span>homa<em>Stories That Deserve to Be Told</em></h1>
+    <p class="hero-sub">
+      A voice-first platform where raw, suppressed stories become<br>
+      AI-crafted books — powered by a 6-agent pipeline that listens,<br>
+      understands, and surprises. Every prompt. Every step. Ship it.
+    </p>
+    <div class="hero-stats">
+      <div class="hs"><span class="hs-n" style="color:var(--amber)">6</span><span class="hs-l">AI Agents</span></div>
+      <div class="hs"><span class="hs-n" style="color:var(--crimson-l)">3</span><span class="hs-l">Memory Stores</span></div>
+      <div class="hs"><span class="hs-n" style="color:var(--teal-l)">2</span><span class="hs-l">Pipeline Phases</span></div>
+      <div class="hs"><span class="hs-n" style="color:var(--violet-l)">1</span><span class="hs-l">PDF Book Output</span></div>
+      <div class="hs"><span class="hs-n" style="color:var(--sage-l)">14</span><span class="hs-l">Weeks to Ship</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ LAWS ══════════ -->
+<div id="laws">
+  <div class="phase-banner">
+    <div class="pb-inner">
+      <span class="pb-pre">Before Everything</span>
+      <div class="pb-title" style="color:var(--amber)">The Laws</div>
+      <p class="pb-desc">From the Vibe Coding Masterclass. These are your operating system for this entire build. Breaking even one will cost you days. Read once. Follow always.</p>
+      <div class="pb-rule" style="background:var(--amber)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="reveal">
+    <h2><span class="chip ca">Non-Negotiable</span> 12 Laws You Will Not Break</h2>
+    <ul class="checklist">
+      <li><span class="ck ck-a">01</span><strong style="color:var(--text)">Architecture before code. Always.</strong> For every feature, ask Claude to design the plan first. You approve it. Then code. Every single time.</li>
+      <li><span class="ck ck-a">02</span><strong style="color:var(--text)">One feature per prompt.</strong> Never say "build the whole pipeline." One agent, one function, one screen per prompt.</li>
+      <li><span class="ck ck-a">03</span><strong style="color:var(--text)">Git commit before every AI edit.</strong> Rollback in 10 seconds, always. This saves your life when the AI breaks something.</li>
+      <li><span class="ck ck-a">04</span><strong style="color:var(--text)">CONTEXT.md at the start of every session.</strong> The AI has zero memory. No context = hallucinations. Paste it first, every time, no exceptions.</li>
+      <li><span class="ck ck-a">05</span><strong style="color:var(--text)">Paste actual code, never describe it.</strong> "I have a function that does X" is not enough. Paste the function. The AI cannot misinterpret what it can see.</li>
+      <li><span class="ck ck-a">06</span><strong style="color:var(--text)">Constrain what must not change.</strong> Every prompt that edits existing code must say "Do NOT touch: X, Y, Z."</li>
+      <li><span class="ck ck-a">07</span><strong style="color:var(--text)">Fresh context for fresh tasks.</strong> After 10-15 exchanges, start a new conversation. Long contexts degrade quality dramatically.</li>
+      <li><span class="ck ck-a">08</span><strong style="color:var(--text)">Test every AI agent in isolation first.</strong> S-Agent, E-Agent, Evaluator — call each one in a test script before wiring them together.</li>
+      <li><span class="ck ck-a">09</span><strong style="color:var(--text)">Log everything during development.</strong> Agent outputs, scores, threshold decisions — log them all. Silent failures in multi-agent pipelines are catastrophic.</li>
+      <li><span class="ck ck-a">10</span><strong style="color:var(--text)">No API keys in code. Ever.</strong> Supabase Edge Function secrets only. .env in .gitignore from minute one.</li>
+      <li><span class="ck ck-a">11</span><strong style="color:var(--text)">Ask AI to verify itself.</strong> After any complex output: "Review your code. Does it reference anything not in the context provided? Fix it."</li>
+      <li><span class="ck ck-a">12</span><strong style="color:var(--text)">Build → Harden → Polish as separate passes.</strong> Working code first. Error handling second. Design last. Never ask for all three in one prompt.</li>
+    </ul>
+
+    <div class="callout co-a">
+      <span class="co-hd hd-a">📋 The CONTEXT.md — Create This Before Anything Else</span>
+      <p>This single file prevents all hallucination. It is the most important file in the project. Update it after every phase. Paste it first in every new Claude or Cursor session.</p>
+    </div>
+
+    <div class="bible-box">
+      <span class="bible-label">CONTEXT.md — Master File (Update After Each Phase)</span>
+      <div class="prompt" style="margin:0;border:none;background:transparent;padding:0;font-size:11.5px">
+<span class="gr"># Kahoma — Project Context (PASTE THIS FIRST IN EVERY SESSION)</span>
+
+<span class="gr">## What Kahoma Does</span>
+Kahoma is a voice-first storytelling platform. Users record raw voice stories
+in any language. A 6-agent AI pipeline listens, extracts meaning with minimal
+interruption, and produces a beautifully formatted PDF book — chapters, images,
+and all — that surprises the user with how much it understood from so little.
+
+<span class="gr">## The 6 Agents</span>
+<span class="hl">Phase 1 (Real-time, per chunk):</span>
+  S-Agent: Sentiment, tonality, direction, predicted future of story
+  E-Agent: Entity extraction — characters, events, places, eras, user perspective on each
+  Evaluator: Scores S+E outputs against transcript context (threshold: 80)
+  Clarification Agent: If score &lt; 80 → ask specific questions. If ≥ 80 → acknowledge.
+
+<span class="hl">Phase 2 (On "Generate My Book"):</span>
+  Breaker Agent: Reads the Bible, breaks story into optimal chapters (thinks like Premchand)
+  Proxy Writer: Rewrites each chapter as a 40-year experienced literary writer
+  Picasso Agent: Generates image prompts per chapter, transforms user photos to era
+  Binder Agent: Assembles chapters + images → final PDF book
+
+<span class="gr">## The Bible (3 Memory Stores Combined)</span>
+1. Sentiment Store (S): Updated after each chunk — latest sentiment wins
+2. Entity Store (E): Updated after each chunk — characters, events, places, relationships, user perspective
+3. Context Window: Conversation history (user transcript + clarification agent messages)
+Bible = S + E + Context → used by Phase 2 agents
+
+<span class="gr">## Tech Stack (NEVER suggest alternatives)</span>
+- Mobile: React Native + Expo SDK 51, Expo Router v3, TypeScript
+- Auth: Supabase Phone OTP
+- Backend: Supabase (Postgres, Storage, Edge Functions, Realtime)
+- All AI Agents: Claude API (claude-sonnet-4-5) via Supabase Edge Functions
+- Audio Transcription: OpenAI Whisper API
+- Image Generation/Transformation: Replicate (SDXL img2img + text-to-image)
+- PDF Generation: WeasyPrint or PDFShift API
+- State Management: Zustand
+- Agent Orchestration: Supabase Edge Functions (Deno)
+
+<span class="gr">## Supabase Project</span>
+URL: <span class="ph">[YOUR_SUPABASE_URL]</span>
+Anon Key: <span class="ph">[YOUR_ANON_KEY]</span>
+
+<span class="gr">## File Structure</span>
+<span class="ph">[PASTE ACTUAL TREE — update after each phase]</span>
+
+<span class="gr">## Database Schema</span>
+<span class="ph">[PASTE SCHEMA — from Phase 2]</span>
+
+<span class="gr">## Current Working Features</span>
+<span class="ph">[UPDATE after each phase]</span>
+
+<span class="gr">## Current Task</span>
+<span class="ph">[SPECIFIC TASK FOR THIS SESSION]</span>
+
+<span class="gr">## AI Rules for All Sessions</span>
+- TypeScript only. No 'any'. All errors must be handled explicitly.
+- Supabase client always from src/lib/supabase.ts
+- Never rewrite files I haven't asked you to touch
+- After every change: list exactly what files changed and why
+- When unsure about an API: ask, don't invent
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ ARCHITECTURE ══════════ -->
+<div id="architecture">
+  <div class="phase-banner">
+    <div class="pb-inner">
+      <span class="pb-pre">Before Writing Code</span>
+      <div class="pb-title" style="color:var(--crimson-l)">The Architecture</div>
+      <p class="pb-desc">Understand the complete system before touching a keyboard. This is your mental model. Every build prompt flows from this understanding.</p>
+      <div class="pb-rule" style="background:var(--crimson)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="reveal">
+    <h2><span class="chip cc">The System</span> 6 Agents, 3 Memory Stores, 1 Bible</h2>
+
+    <h3>Phase 1 — The Real-Time Loop (runs on every voice chunk)</h3>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-n">🎙️</div>
+        <div class="flow-body">
+          <div class="flow-t">User records a voice chunk → Whisper transcribes it</div>
+          <div class="flow-d">Any length. Any language. Raw. Saved to Supabase Storage. Whisper transcription runs immediately on upload. Result appended to Context Window.</div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-n">📊</div>
+        <div class="flow-body">
+          <div class="flow-t">S-Agent + E-Agent run in parallel on the full context</div>
+          <div class="flow-d">Input to BOTH: the entire context window (all chunks so far). S-Agent outputs: sentiment, tonality, story direction, predicted future. E-Agent outputs: all entities + user's perspective on each entity.</div>
+          <div><span class="flow-tag" style="background:rgba(232,160,32,0.15);color:var(--amber)">S-Agent</span><span class="flow-tag" style="background:rgba(26,158,138,0.15);color:var(--teal-l)">E-Agent</span><span class="flow-tag" style="background:rgba(139,128,112,0.1);color:var(--soft)">Parallel</span></div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-n">⚖️</div>
+        <div class="flow-body">
+          <div class="flow-t">Evaluator scores both outputs (threshold: 80)</div>
+          <div class="flow-d">Input: S output + E output + full context. Scores quality of understanding. If ≥ 80: tell Clarification Agent to acknowledge. If &lt; 80: identify exactly what's missing, tell Clarification Agent what to ask.</div>
+          <div><span class="flow-tag" style="background:rgba(124,77,255,0.15);color:var(--violet-l)">Evaluator</span></div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-n">💬</div>
+        <div class="flow-body">
+          <div class="flow-t">Clarification Agent responds to user</div>
+          <div class="flow-d">If score ≥ 80: warm acknowledgement + "continue your story". If score &lt; 80: 1 specific, minimal question. Also: asks for character photo ONCE when new character introduced. Never repeats image requests.</div>
+          <div><span class="flow-tag" style="background:rgba(192,57,43,0.15);color:var(--crimson-l)">Clarification Agent</span></div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-n">💾</div>
+        <div class="flow-body">
+          <div class="flow-t">Memory stores updated → user continues → loop repeats</div>
+          <div class="flow-d">S store updated with latest sentiment. E store updated with latest entities. Context window extended with user chunk + clarification agent response. Loop runs for every new chunk until user clicks "Generate My Book".</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Phase 2 — The Book Generation (runs when user clicks "Generate My Book")</h3>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-n">📖</div>
+        <div class="flow-body">
+          <div class="flow-t">Bible assembled from 3 stores → Breaker Agent structures chapters</div>
+          <div class="flow-d">Bible = latest S store + latest E store + full Context Window. Breaker thinks like Premchand, Dharmveer Bharati, Nirala. Finds the most exciting, emotionally resonant chapter order. Assigns exact transcript segments to each chapter.</div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-n">✍️</div>
+        <div class="flow-body">
+          <div class="flow-t">Proxy Writer rewrites each chapter as literary prose</div>
+          <div class="flow-d">40 years of experience. Has written acclaimed novels. Takes Breaker's raw chapter divisions + Bible context → produces beautifully written prose for each chapter. Preserves user's perspective and emotional truth.</div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-n">🎨</div>
+        <div class="flow-body">
+          <div class="flow-t">Picasso Agent generates image prompts + transforms photos</div>
+          <div class="flow-d">For user-uploaded photos: transforms to era-appropriate style using Replicate img2img. For chapters with no photo: generates illustration from context. Can combine multiple photos. Fetches era/timing from Bible.</div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-n">📚</div>
+        <div class="flow-body">
+          <div class="flow-t">Binder Agent assembles final PDF book</div>
+          <div class="flow-d">Places images into chapters at exact positions. Applies book-quality typography. Generates cover, table of contents, chapter pages. Exports final PDF. User is surprised.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>The 6 Agents At a Glance</h3>
+    <div class="agent-grid">
+      <div class="agent-card">
+        <span class="agent-icon">📊</span>
+        <div class="agent-name" style="color:var(--amber)">S-Agent</div>
+        <div class="agent-role">Sentiment Analysis. Tonality, direction, emotional arc, predicted story future. Updated each chunk.</div>
+        <div class="agent-input">Input: full context window</div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-icon">🔍</span>
+        <div class="agent-name" style="color:var(--teal-l)">E-Agent</div>
+        <div class="agent-role">Entity Extraction. Characters, events, places, eras, relationships, USER's perspective on every entity.</div>
+        <div class="agent-input">Input: full context window</div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-icon">⚖️</span>
+        <div class="agent-name" style="color:var(--violet-l)">Evaluator</div>
+        <div class="agent-role">Scores S+E outputs 0-100. Identifies gaps. Decides: acknowledge or ask question. Sets what to ask.</div>
+        <div class="agent-input">Input: S output + E output + context</div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-icon">💬</span>
+        <div class="agent-name" style="color:var(--crimson-l)">Clarification</div>
+        <div class="agent-role">Warm acknowledgement if understood. Minimal question if not. Photo request for new characters (once only).</div>
+        <div class="agent-input">Input: evaluator decision</div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-icon">✂️</span>
+        <div class="agent-name" style="color:var(--amber)">Breaker</div>
+        <div class="agent-role">Literary chapter structure. Assigns transcript to chapters. Thinks like India's greatest writers.</div>
+        <div class="agent-input">Input: the Bible</div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-icon">✍️</span>
+        <div class="agent-name" style="color:var(--teal-l)">Proxy Writer</div>
+        <div class="agent-role">40-year experienced literary writer. Transforms raw transcripts into beautiful, publishable prose per chapter.</div>
+        <div class="agent-input">Input: chapter + Bible</div>
+      </div>
+    </div>
+    <div class="agent-grid" style="grid-template-columns:1fr 1fr">
+      <div class="agent-card">
+        <span class="agent-icon">🎨</span>
+        <div class="agent-name" style="color:var(--violet-l)">Picasso Agent</div>
+        <div class="agent-role">Writes image generation prompts. Transforms user photos to era. Generates chapter illustrations. Combines multiple photos when needed.</div>
+        <div class="agent-input">Input: Bible + chapter list + user photos</div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-icon">📚</span>
+        <div class="agent-name" style="color:var(--sage-l)">Binder Agent</div>
+        <div class="agent-role">Final assembly. Places images in chapters. Applies typography. Generates cover + TOC. Produces the PDF. Delivers the surprise.</div>
+        <div class="agent-input">Input: all chapters + all images + metadata</div>
+      </div>
+    </div>
+
+    <h3>The 3 Memory Stores (in Supabase)</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Store</th><th>What's In It</th><th>Update Behavior</th><th>Used By</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ta">Sentiment Store</span></td><td>Sentiment, tonality, story direction, predicted future</td><td>Updated (not appended) after each chunk. Latest value wins.</td><td>Evaluator, Bible, Breaker</td></tr>
+          <tr><td><span class="tt">Entity Store</span></td><td>Characters + relationships + events + places + eras + user's perspective on each</td><td>Updated after each chunk. New entities added, existing ones enriched.</td><td>Evaluator, Picasso, Breaker, Proxy Writer</td></tr>
+          <tr><td><span class="tc">Context Window</span></td><td>Full conversation: user transcript chunks + clarification agent responses, in order</td><td>Appended. Never overwritten. Growing record of the entire session.</td><td>S-Agent, E-Agent, Evaluator, all Phase 2 agents</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <h2><span class="chip cc">Research Prompts</span> Run These First in Claude.ai</h2>
+
+    <div class="prompt">
+<span class="pl">Research R-01 — Multi-Agent Scoring Architecture</span>
+<span class="pw">Claude.ai</span>
+I'm building Kahoma — a storytelling app with a multi-agent AI pipeline.
+
+I need to design the Evaluator agent's scoring system.
+
+The Evaluator receives:
+1. S-Agent output (sentiment, tonality, direction, predicted future)
+2. E-Agent output (characters, events, places, eras, user perspectives)  
+3. The full conversation context (growing with each user chunk)
+
+The Evaluator must output a score from 0–100 and a decision.
+
+Design for me:
+1. What specific criteria should the 0-100 score measure?
+   (e.g., entity completeness, sentiment confidence, ambiguity level)
+2. What are the scoring rubrics — what does 90, 70, 50, 30 mean concretely?
+3. What exact JSON should the Evaluator output?
+   Include: overall_score, gaps[], decision (acknowledge|ask), 
+   questions_to_ask[], confidence_per_dimension
+4. How should the scoring evolve as context grows?
+   (early chunks will naturally score lower — should threshold adjust?)
+5. What are the "catastrophic assumption" cases that should ALWAYS trigger
+   a question regardless of score?
+   (e.g., character identity ambiguity that would change the story's meaning)
+
+Show me the complete Evaluator system prompt in Claude API format.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Research R-02 — Sentiment + Entity Agent Design</span>
+<span class="pw">Claude.ai</span>
+I'm building two parallel AI agents for real-time voice story analysis.
+
+Agent 1 — S-Agent (Sentiment Analysis):
+Must extract: emotional sentiment, tonality (sad/joyful/angry/nostalgic etc.),
+story direction (where user is steering it), political/social bias if any,
+user's emotional state while telling, predicted future arc of story.
+
+Agent 2 — E-Agent (Entity Extractor):
+Must extract: all characters (name, relationship to narrator, birth era),
+all events (what happened + user's perspective on it — was it good/bad?),
+all places (house, village, city — and what it means to the user),
+all time eras (1940s, 1960s, etc.), relationship graph between entities.
+
+CRITICAL nuance for E-Agent: a grandmother can be loving for one user and
+cruel for another. A house can feel like home or like a haunted place.
+The agent must capture the USER'S PERSPECTIVE on each entity, not the
+"objective" view. This is the most important design principle.
+
+Design for me:
+1. The complete system prompt for S-Agent (in Claude API format)
+   — it must output structured JSON only
+   — show the exact JSON schema it should return
+2. The complete system prompt for E-Agent (in Claude API format)
+   — it must output structured JSON only
+   — show the exact JSON schema (must include user_perspective per entity)
+3. How should these agents handle incomplete information in early chunks?
+4. How should entity relationships be stored as a graph structure?
+5. What edge cases must each agent handle gracefully?
+    </div>
+
+    <div class="prompt">
+<span class="pl">Research R-03 — Clarification Agent UX Design</span>
+<span class="pw">Claude.ai</span>
+The Clarification Agent in Kahoma talks to users who are sharing suppressed,
+emotionally vulnerable stories. It has 3 tasks:
+1. Send warm acknowledgements when understanding is complete (score ≥ 80)
+2. Ask minimal, specific clarifying questions when score &lt; 80
+3. Request character photos when new characters are introduced (once per character)
+
+Design this agent's behavior:
+
+1. Write 8 example acknowledgement messages that feel genuinely warm,
+   not robotic. Vary them so they don't repeat. They must invite continuing.
+
+2. Write 6 example clarification questions that feel like a kind friend asking,
+   not an interrogation. Each should be: specific, brief, non-intrusive.
+   Example: "I want to make sure I have Rahul right — he's your father, yes?"
+
+3. Write 3 example photo request messages that explain the benefit warmly.
+   Must not feel like a demand. Must accept "no" gracefully.
+
+4. Write the system prompt for the Clarification Agent:
+   — When to acknowledge vs. ask (based on evaluator score)
+   — Tone: warm, patient, like a trusted friend who is helping write your memoir
+   — Length limits: acknowledgements max 2 sentences, questions max 1 sentence
+   — Photo request: max 2 sentences, explain why it helps
+
+5. What should the agent say when a user gives a very emotional, raw response?
+   (must not be clinical or dismissive of the emotion)
+    </div>
+
+    <div class="prompt">
+<span class="pl">Research R-04 — Breaker + Proxy Writer Design</span>
+<span class="pw">Claude.ai</span>
+The Breaker Agent and Proxy Writer in Kahoma are Phase 2 agents that
+transform raw story data into a published book.
+
+Breaker Agent:
+- Input: the Bible (S store + E store + full context window)
+- Must think like India's greatest literary writers: Premchand, Dharmveer Bharati,
+  Suryakant Tripathi Nirala
+- Must find the most emotionally resonant chapter structure
+- Output: chapter list with titles + which transcript segments belong to each
+
+Proxy Writer Agent:
+- Input: one chapter's content + full Bible context
+- Must write like a 40-year experienced author who has written prize-winning novels
+- Must preserve the narrator's voice and emotional perspective
+- Must not sanitize difficult emotions — if Grandmother was cruel, she is cruel
+
+Design for me:
+1. The complete Breaker system prompt — include the literary reference to
+   Indian master writers as inspiration for chapter structuring
+2. What JSON structure should Breaker output?
+   (chapter_number, title, era, location, transcript_segments[], emotional_arc)
+3. The complete Proxy Writer system prompt for one chapter
+4. What literary techniques should Proxy Writer be instructed to use?
+   (show don't tell, sensory details, dialogue reconstruction, etc.)
+5. How should both agents handle very short stories (under 5 minutes)?
+6. How should Proxy Writer handle inconsistencies in the user's telling?
+    </div>
+
+    <div class="prompt">
+<span class="pl">Research R-05 — Picasso Agent + Image Era Transformation</span>
+<span class="pw">Claude.ai</span>
+The Picasso Agent generates images for each book chapter.
+Two types:
+A) User uploaded a photo of a character → transform to era-appropriate style
+B) No photo → generate contextual chapter illustration from text
+
+For Type A (photo transformation):
+- Input: original photo + era from Bible (e.g., "1960s rural India")
+- Must transform the photo to look like it was taken in that era
+- Must preserve the person's identity
+- Use Replicate SDXL img2img
+
+For Type B (text-to-image generation):
+- Input: chapter content + era + location + emotional tone from S-Agent
+- Must generate a photorealistic, evocative scene
+- Style: warm, slightly aged, film grain, period-appropriate
+
+Design for me:
+1. The Picasso Agent system prompt — it receives the Bible and chapter list
+   and must output a JSON array of image_tasks (one per chapter)
+2. What JSON structure for each image_task?
+   (chapter_id, type: photo_transform|generate, era, location, prompt,
+   source_character_id if applicable, emotional_tone)
+3. The image generation prompt formula for era transformation
+   (what exact Stable Diffusion prompt structure works best?)
+4. The image generation prompt formula for chapter illustrations
+5. Which Replicate models should I use for each type in 2025?
+   Give exact model identifiers.
+6. How to handle multiple characters in one scene?
+7. If user refuses to provide photo: what is the fallback generation approach?
+    </div>
+
+    <div class="prompt">
+<span class="pl">Research R-06 — PDF Book Quality + API Options</span>
+<span class="pw">Claude.ai</span>
+Kahoma's final output is a PDF book that must look genuinely publishable.
+Requirements:
+- Book-quality typography (custom serif fonts for body, display for headings)
+- Chapter divider pages with decorative elements
+- Full-width chapter images with captions
+- Running headers with book title and chapter name
+- Page numbers in footer
+- Decorative drop caps on first paragraph of each chapter
+- Cover page (title, author name, year)
+- Table of contents
+- Format: A5 (14.8cm × 21cm) — standard paperback size
+
+My stack: React Native + Expo + Supabase Edge Functions (Deno).
+
+Evaluate and recommend:
+1. WeasyPrint (Python, Supabase Function with Python runtime?)
+2. PDFShift API (cloud HTML→PDF)
+3. Puppeteer/Playwright (headless browser — can Supabase run this?)
+4. Prince XML (professional CSS-to-PDF)
+5. react-native-html-to-pdf (client-side)
+
+For each: quality for book formatting, custom font support, A5 page size,
+implementation complexity in Supabase, cost.
+
+Recommendation: which one and why?
+Also: what CSS framework produces the best book-quality HTML for PDF?
+Give me the HTML/CSS skeleton for a book that looks truly beautiful when printed.
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ FOUNDATION ══════════ -->
+<div id="foundation">
+  <div class="phase-banner">
+    <div class="pb-inner">
+      <span class="pb-pre">Phase 1 — Weeks 1–2</span>
+      <div class="pb-title" style="color:var(--teal-l)">Foundation</div>
+      <p class="pb-desc">Scaffold. Supabase. Phone OTP login. User can open the app, log in, and see the home screen on a real device. Nothing more. This is the base everything else stands on.</p>
+      <div class="pb-rule" style="background:var(--teal)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="reveal">
+    <h2><span class="chip ct">Setup</span> Accounts + Tools (Day 1)</h2>
+    <ul class="steps">
+      <li><div class="sn snt">01</div><div class="step-body"><div class="step-t">Create All Accounts</div><div class="step-d">supabase.com · platform.openai.com · console.anthropic.com · replicate.com · expo.dev · cursor.sh · github.com · developer.apple.com ($99/year — do this NOW, takes 48h approval)</div></div></li>
+      <li><div class="sn snt">02</div><div class="step-body"><div class="step-t">Get All API Keys (Store Locally Only)</div><div class="step-d">OpenAI: platform.openai.com/api-keys · Anthropic: console.anthropic.com/settings/keys · Replicate: replicate.com/account/api-tokens · Local notes file only. Never paste online.</div></div></li>
+      <li><div class="sn snt">03</div><div class="step-body"><div class="step-t">Install Dev Tools</div><div class="step-d">Node.js 20 LTS · Git · Cursor (cursor.sh) · Expo Go on your phone · Supabase CLI: npm install -g supabase</div></div></li>
+      <li><div class="sn snt">04</div><div class="step-body"><div class="step-t">Record Your Test Story</div><div class="step-d">Record 3 minutes of yourself telling any real story about a real person from your life. In any mix of Hindi/English. Save as test-story.m4a — this is your test asset for the entire build. NEVER use dummy audio.</div></div></li>
+    </ul>
+
+    <div class="prompt">
+<span class="pl">Terminal — Scaffold Commands</span>
+<span class="pw">Terminal</span>
+npx create-expo-app@latest Kahoma --template blank-typescript
+cd Kahoma
+
+npx expo install expo-router expo-av expo-file-system \
+  expo-image-picker expo-sharing expo-media-library \
+  @supabase/supabase-js zustand \
+  react-native-url-polyfill \
+  @react-native-async-storage/async-storage \
+  @expo/vector-icons
+
+npm install
+
+git init && git add . && git commit -m "initial scaffold"
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-01 — Full Project Structure</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+I just created an Expo app called Kahoma (SDK 51, Expo Router v3, TypeScript).
+Backend: Supabase only. Auth: Phone OTP.
+
+Set up the complete project:
+
+1. Update app.json:
+   - scheme: "kahoma"
+   - iOS bundleIdentifier: "com.yourname.kahoma"
+   - Android package: "com.yourname.kahoma"
+   - plugins: expo-router, expo-av, expo-file-system, expo-image-picker
+   - iOS NSMicrophoneUsageDescription: "Kahoma records your stories"
+   - iOS NSPhotoLibraryUsageDescription: "Add character photos to your story"
+
+2. tsconfig.json: strict mode, path alias "@/*" → "./src/*"
+
+3. Create this exact folder structure (empty placeholder files):
+src/
+  app/
+    (tabs)/
+      _layout.tsx        <- tab navigator
+      index.tsx          <- Home screen
+      record.tsx         <- Recording screen
+      profile.tsx        <- Profile screen
+    auth/
+      phone.tsx          <- Phone number entry
+      verify.tsx         <- OTP verification
+    session/
+      [id].tsx           <- Active session view (real-time loop)
+    book/
+      [id].tsx           <- Book preview + PDF
+    _layout.tsx          <- Root layout with auth gate + onboarding check
+    onboarding.tsx       <- First-launch onboarding
+  components/
+    AudioWaveform.tsx
+    RecordButton.tsx
+    ClarificationBubble.tsx  <- AI message bubble
+    UserBubble.tsx           <- User transcript bubble
+    AgentStatusBar.tsx       <- Shows which agents are running
+    BookCover.tsx
+    SessionCard.tsx
+  hooks/
+    useRecording.ts
+    useSessionStatus.ts
+  lib/
+    supabase.ts
+    uploadService.ts
+    bibleService.ts      <- assembles the Bible
+    pdfService.ts
+  store/
+    auth.ts
+    sessions.ts
+  types/
+    index.ts
+
+4. src/lib/supabase.ts: Supabase client from env vars. AsyncStorage for sessions.
+
+5. src/types/index.ts with these TypeScript interfaces:
+   Session: { id, user_id, title, status, phase, created_at, updated_at }
+   VoiceChunk: { id, session_id, user_id, audio_url, transcript, chunk_order, created_at }
+   
+   SentimentStore: { id, session_id, sentiment, tonality, story_direction, 
+                     predicted_future, confidence, updated_at }
+   
+   EntityStore: { id, session_id, entities: Entity[], relationships: Relationship[], updated_at }
+   Entity: { entity_id, type: 'character'|'event'|'place'|'era', name, 
+             user_perspective: string, attributes: Record&lt;string,any&gt; }
+   Relationship: { from_entity_id, to_entity_id, relationship_type, description }
+   
+   Character: { id, session_id, name, relationship_to_narrator, birth_era,
+                photo_url, photo_era_transformed_url, photo_requested: boolean }
+   
+   ContextMessage: { id, session_id, role: 'user'|'assistant', content, 
+                     chunk_id, created_at }
+   
+   EvaluatorResult: { score, decision: 'acknowledge'|'ask', 
+                      gaps: string[], questions_to_ask: string[] }
+   
+   Chapter: { id, session_id, chapter_number, title, era, location,
+              transcript_segments: string[], content_written, 
+              image_url, image_prompt, emotional_arc, status }
+   
+   Book: { id, session_id, user_id, pdf_url, cover_title, 
+           author_name, status, page_count, created_at }
+   
+   SessionStatus: 'recording'|'processing_chunk'|'awaiting_user'|'generating_book'|'book_ready'|'failed'
+
+6. Create .env.local with EXPO_PUBLIC_ vars
+
+Create all files. Show final tree.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-02 — Supabase SQL Migration</span>
+<span class="pw">Claude.ai → Supabase SQL Editor</span>
+Write the complete SQL migration for Kahoma — a 6-agent storytelling platform.
+
+Tables needed:
+
+1. sessions:
+   id uuid PK, user_id uuid FK→auth.users NOT NULL CASCADE,
+   title text DEFAULT 'My Story',
+   status text DEFAULT 'recording',
+   phase integer DEFAULT 1 (1=real-time loop, 2=book generation),
+   error_message text,
+   created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now()
+
+2. voice_chunks:
+   id uuid PK, session_id uuid FK→sessions CASCADE,
+   user_id uuid FK→auth.users,
+   audio_url text, transcript text,
+   chunk_order integer NOT NULL,
+   whisper_status text DEFAULT 'pending' (pending|transcribing|done|failed),
+   created_at timestamptz DEFAULT now()
+
+3. sentiment_store:
+   id uuid PK, session_id uuid FK→sessions UNIQUE CASCADE,
+   sentiment text, tonality text, story_direction text,
+   predicted_future text, confidence_score integer,
+   raw_output jsonb DEFAULT '{}',
+   updated_at timestamptz DEFAULT now()
+   (NOTE: one row per session, always UPDATE not INSERT after first time)
+
+4. entity_store:
+   id uuid PK, session_id uuid FK→sessions UNIQUE CASCADE,
+   entities jsonb DEFAULT '[]',
+   relationships jsonb DEFAULT '[]',
+   raw_output jsonb DEFAULT '{}',
+   updated_at timestamptz DEFAULT now()
+   (NOTE: one row per session, always UPDATE not INSERT after first time)
+
+5. context_messages:
+   id uuid PK, session_id uuid FK→sessions CASCADE,
+   role text NOT NULL (user|assistant),
+   content text NOT NULL,
+   chunk_id uuid FK→voice_chunks (nullable),
+   message_order integer,
+   created_at timestamptz DEFAULT now()
+
+6. characters:
+   id uuid PK, session_id uuid FK→sessions CASCADE,
+   name text NOT NULL, relationship_to_narrator text,
+   birth_era text, photo_url text,
+   photo_era_transformed_url text,
+   photo_requested boolean DEFAULT false,
+   created_at timestamptz DEFAULT now()
+
+7. chapters:
+   id uuid PK, session_id uuid FK→sessions CASCADE,
+   chapter_number integer NOT NULL,
+   title text, era text, location text,
+   transcript_segments jsonb DEFAULT '[]',
+   content_written text,
+   image_url text, image_prompt text,
+   emotional_arc text,
+   status text DEFAULT 'pending',
+   created_at timestamptz DEFAULT now()
+
+8. books:
+   id uuid PK, session_id uuid FK→sessions UNIQUE CASCADE,
+   user_id uuid FK→auth.users,
+   pdf_url text, cover_title text, author_name text,
+   status text DEFAULT 'pending', page_count integer,
+   created_at timestamptz DEFAULT now()
+
+RLS: users can only access their own data on ALL tables.
+Enable Realtime: sessions, context_messages, chapters, books
+Indexes: sessions(user_id), voice_chunks(session_id), context_messages(session_id)
+updated_at trigger on sessions.
+Storage buckets: "audio" (private, 200MB max), "photos" (private, 20MB), "books" (private, 50MB)
+
+Output complete runnable SQL only.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-03 — Phone OTP Auth</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build complete phone OTP auth for Kahoma.
+Supabase Auth supports phone OTP natively. No external auth service needed.
+
+1. src/store/auth.ts — Zustand store:
+   State: { user, session, loading, initialized }
+   Actions:
+   - initialize(): supabase.auth.onAuthStateChange, set state, initialized=true
+   - sendOTP(phone: string): supabase.auth.signInWithOtp({ phone })
+     Validate phone has country code before calling
+   - verifyOTP(phone: string, token: string): supabase.auth.verifyOtp({ phone, token, type: 'sms' })
+   - signOut(): supabase.auth.signOut()
+
+2. src/app/_layout.tsx — Root layout:
+   - Initialize auth on mount
+   - Loading: centered spinner while !initialized
+   - Redirect if no user → /auth/phone
+   - Redirect if user → /(tabs) (or /onboarding if first time)
+
+3. src/app/auth/phone.tsx:
+   Deep dark background (#050508)
+   Center: large Kahoma logotype in Cormorant Garamond serif, amber color
+   Tagline: "Your story. Your words. Your book." in muted small text
+   Below: country code picker (default +91) + phone number input
+   "Get OTP" button in amber
+   Warm, minimal aesthetic — feels like an exclusive journal app
+
+4. src/app/auth/verify.tsx:
+   "Enter the 6-digit code sent to {phone}"
+   Six individual TextInput boxes, auto-advance on each digit
+   Auto-submit when all 6 entered
+   "Resend code" with 60-second cooldown timer
+   Back button to /auth/phone
+   Same dark amber aesthetic
+
+TypeScript. Handle all error states. No external UI libraries.
+    </div>
+
+    <div class="callout co-t">
+      <span class="co-hd hd-t">✅ Phase 1 Gate — Test on Real Phone</span>
+      <p>Enter phone → OTP arrives on phone → Enter code → Home screen shows → Kill app → Reopen → Still logged in → Sign out → Back to phone screen. All 5 pass? Git commit. Then move to Phase 2.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ PHASE 1 AGENTS ══════════ -->
+<div id="phase1agents">
+  <div class="phase-banner">
+    <div class="pb-inner">
+      <span class="pb-pre">Phase 2 — Weeks 3–7</span>
+      <div class="pb-title" style="color:var(--violet-l)">Phase 1 Agents</div>
+      <p class="pb-desc">The real-time loop. S-Agent, E-Agent, Evaluator, Clarification Agent. Build and test each in isolation first. Then wire them together. Each must work perfectly before you chain them.</p>
+      <div class="pb-rule" style="background:var(--violet)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="reveal">
+    <h2><span class="chip cv">Setup</span> Edge Functions Init</h2>
+    <div class="prompt">
+<span class="pl">Terminal — Supabase Functions</span>
+<span class="pw">Terminal</span>
+supabase login
+supabase init
+supabase link --project-ref <span class="ph">YOUR_PROJECT_REF</span>
+
+<span class="gr"># Phase 1 Agent Functions</span>
+supabase functions new transcribe-chunk
+supabase functions new run-s-agent
+supabase functions new run-e-agent
+supabase functions new run-evaluator
+supabase functions new run-clarification
+supabase functions new process-chunk   <span class="gr"># orchestrator for phase 1</span>
+
+<span class="gr"># Phase 2 Agent Functions</span>
+supabase functions new run-breaker
+supabase functions new run-proxy-writer
+supabase functions new run-picasso
+supabase functions new run-binder
+supabase functions new generate-book   <span class="gr"># orchestrator for phase 2</span>
+
+<span class="gr"># Set API keys as secrets</span>
+supabase secrets set OPENAI_API_KEY=<span class="ph">sk-...</span>
+supabase secrets set ANTHROPIC_API_KEY=<span class="ph">sk-ant-...</span>
+supabase secrets set REPLICATE_API_KEY=<span class="ph">r8_...</span>
+supabase secrets set PDFSHIFT_API_KEY=<span class="ph">your_key</span>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <h2><span class="chip cv">Step 2.1</span> Transcription + Process-Chunk Orchestrator</h2>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-04 — transcribe-chunk Edge Function</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/transcribe-chunk/index.ts (Deno TypeScript)
+Handles: POST { chunk_id: string }
+
+Steps:
+1. Init Supabase with service_role key from Deno.env
+2. Fetch voice_chunk by ID. If not found or status != 'pending': return early.
+3. Update voice_chunk.whisper_status = 'transcribing'
+4. Get signed URL for audio_url from 'audio' Storage bucket (1 hour expiry)
+5. Download audio as ArrayBuffer using fetch(signedUrl)
+6. Call OpenAI Whisper API:
+   POST https://api.openai.com/v1/audio/transcriptions
+   FormData with: file (as Blob), model: "whisper-1"
+   DO NOT set language param — let Whisper auto-detect (handles Hindi-English mix)
+   response_format: "text"
+   Authorization: Bearer {Deno.env.get('OPENAI_API_KEY')}
+
+7. Update voice_chunk: transcript = response text, whisper_status = 'done'
+8. Append to context_messages table:
+   { session_id, role: 'user', content: transcript, chunk_id, message_order: (count existing + 1) }
+9. Trigger process-chunk orchestrator:
+   fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/process-chunk`, 
+   { method:'POST', headers:{Authorization:'Bearer '+SERVICE_ROLE_KEY, 'Content-Type':'application/json'}, 
+   body: JSON.stringify({ session_id, chunk_id }) })
+   // Fire and forget — don't await
+10. Return { success: true, transcript }
+
+Error: set whisper_status = 'failed'. Log everything.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-05 — S-Agent Edge Function</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/run-s-agent/index.ts
+Handles: POST { session_id: string }
+
+Steps:
+1. Fetch all context_messages for this session, ordered by message_order
+2. Build the full context as a conversation string
+3. Call Claude API (claude-sonnet-4-5) with this system prompt:
+
+SYSTEM PROMPT:
+---
+You are the Sentiment Analysis Agent for Kahoma, a storytelling platform.
+You analyze a growing conversation transcript and extract the emotional landscape.
+
+You MUST respond with ONLY a valid JSON object — no other text, no markdown, no explanation.
+
+JSON schema:
+{
+  "sentiment": string (overall emotional tone: joyful|melancholic|nostalgic|bitter|triumphant|haunted|complex|etc),
+  "tonality": string (how narrator tells the story: crying|proud|detached|warm|angry|peaceful|etc),
+  "story_direction": string (where narrator is steering this — their intent, what they want to convey),
+  "political_social_lens": string or null (any bias, worldview, or perspective the narrator brings),
+  "predicted_future": string (your prediction of where this story will emotionally go),
+  "confidence": integer (0-100, how confident you are in this analysis given available context),
+  "key_emotional_moments": string[] (specific moments from the transcript with high emotional weight),
+  "narrator_current_emotional_state": string (how narrator feels RIGHT NOW while telling this)
+}
+
+RULE: The user is the supreme authority on their own story. Never judge. Always understand.
+If information is insufficient: make your best inference and set confidence accordingly.
+---
+
+USER: "Here is the complete story so far:\n\n" + contextString
+
+4. Parse JSON (strip markdown if present, trim whitespace)
+5. UPSERT to sentiment_store:
+   If row exists for session_id: UPDATE. If not: INSERT.
+   Set: all fields from JSON output, updated_at = now()
+6. Return { success: true, output: parsedJSON }
+
+Error handling: if JSON parse fails, log raw response and return error.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-06 — E-Agent Edge Function</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/run-e-agent/index.ts
+Handles: POST { session_id: string }
+
+Steps:
+1. Fetch all context_messages for this session
+2. Fetch CURRENT entity_store for this session (if exists — for enrichment, not replacement)
+3. Build context string from messages
+4. Call Claude API (claude-sonnet-4-5) with this system prompt:
+
+SYSTEM PROMPT:
+---
+You are the Entity Extraction Agent for Kahoma.
+Your job: extract ALL meaningful entities from this story and capture
+THE NARRATOR'S PERSPECTIVE on each entity — not the objective reality.
+
+CRITICAL: A grandmother can be loving OR cruel depending on the narrator's experience.
+A house can feel like home OR like a prison. A success can feel like a failure.
+ALWAYS capture what the entity MEANS to THIS narrator, not what it objectively is.
+
+Respond with ONLY a valid JSON object:
+{
+  "entities": [
+    {
+      "entity_id": string (generate a short unique slug: e.g., "dadi-1", "house-lahore"),
+      "type": "character"|"event"|"place"|"era"|"object",
+      "name": string,
+      "user_perspective": string (HOW THE NARRATOR VIEWS THIS — the most important field),
+      "emotional_charge": "positive"|"negative"|"complex"|"neutral",
+      "attributes": {
+        "for character": { "relationship_to_narrator": string, "birth_era_approx": string, "key_traits_per_narrator": string },
+        "for event": { "when": string, "outcome": string, "narrator_felt": string },
+        "for place": { "location": string, "era": string, "what_it_represents_to_narrator": string },
+        "for era": { "decade": string, "geographic_context": string }
+      },
+      "mentioned_in_chunks": integer[] (chunk_orders where this entity appears)
+    }
+  ],
+  "relationships": [
+    {
+      "from": string (entity_id),
+      "to": string (entity_id),
+      "type": string (is_parent_of|is_child_of|married_to|enemy_of|lived_in|caused|etc),
+      "narrator_framing": string (how narrator describes this relationship)
+    }
+  ],
+  "new_characters_this_chunk": string[] (entity_ids of characters appearing for FIRST TIME — need photo request)
+}
+
+RULE: Merge with existing entities — enrich them, don't duplicate.
+RULE: Always prioritize narrator's subjective experience over objective interpretation.
+---
+
+5. Parse JSON, handle errors
+6. UPSERT entity_store for this session (enrich existing data)
+7. For each entity in new_characters_this_chunk: check if character already has photo_requested=true in characters table. If not: insert/update character row, set photo_requested=false (will be requested by clarification agent)
+8. Return { success: true, output, new_characters: [...] }
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-07 — Evaluator Edge Function</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/run-evaluator/index.ts
+Handles: POST { session_id: string }
+
+Steps:
+1. Fetch: context_messages, sentiment_store, entity_store for this session
+2. Build evaluation input
+3. Call Claude API with system prompt:
+
+SYSTEM PROMPT:
+---
+You are the Evaluator Agent for Kahoma. You assess how well the S-Agent and E-Agent
+have understood the story so far, and decide whether we need clarification.
+
+You receive: the full story context + S-Agent output + E-Agent output.
+
+Score the understanding from 0 to 100 based on:
+- Entity completeness: are all mentioned people/places/events captured? (25pts)
+- Relationship clarity: are key relationships between entities clear? (20pts)
+- Sentiment confidence: is emotional understanding solid? (20pts)
+- Perspective accuracy: is user's subjective view of entities captured? (20pts)
+- Story coherence: can we tell a coherent story from what we have? (15pts)
+
+THRESHOLD LOGIC:
+- Score ≥ 80: Understanding is good. Acknowledge user. Let them continue.
+- Score < 80: Understanding has gaps. Ask ONE specific clarifying question about the most critical gap.
+
+CATASTROPHIC ASSUMPTION RULE: If you are unsure about a key character's identity
+in a way that would fundamentally change the story's meaning → ALWAYS ask,
+regardless of score. Mark as catastrophic_gap: true.
+
+Respond with ONLY valid JSON:
+{
+  "overall_score": integer,
+  "dimension_scores": { "entity_completeness": int, "relationship_clarity": int, "sentiment_confidence": int, "perspective_accuracy": int, "story_coherence": int },
+  "decision": "acknowledge" | "ask",
+  "gaps": string[] (specific things we don't know well enough),
+  "most_critical_gap": string or null,
+  "question_to_ask": string or null (if decision is "ask" — warm, specific, max 1 sentence),
+  "catastrophic_gap": boolean,
+  "new_characters_needing_photo": string[] (entity_ids from E-Agent output not yet photo-requested)
+}
+---
+
+4. Parse JSON
+5. Store evaluator result (can save to a separate evaluator_results table or just pass forward)
+6. Return { success: true, result: parsedJSON }
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-08 — Clarification Agent Edge Function</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/run-clarification/index.ts
+Handles: POST { session_id: string, evaluator_result: EvaluatorResult }
+
+This function has 3 possible outputs to send to the user:
+1. Acknowledgement (if evaluator decision = 'acknowledge')
+2. Clarifying question (if evaluator decision = 'ask')
+3. Photo request (if new characters need photos — can combine with 1 or 2)
+
+Steps:
+1. Receive session_id and evaluator_result in POST body
+2. Fetch session and latest context to understand story tone
+
+3. Build the clarification agent message using Claude:
+   
+   If decision = 'acknowledge' AND no photo requests:
+   → Call Claude to generate a warm 1-2 sentence acknowledgement
+   
+   If decision = 'ask':
+   → Call Claude to rephrase evaluator_result.question_to_ask into warm, friendly language
+   
+   If there are new_characters_needing_photo:
+   → Append a photo request for the first unasked character ONLY
+   → Mark that character.photo_requested = true in DB
+
+SYSTEM PROMPT for message generation:
+---
+You are Kahoma's story companion. You speak like a warm, patient friend who is
+helping someone turn their life story into a book.
+
+Your tone: gentle, unhurried, genuinely interested. Never clinical. Never formal.
+Length: acknowledgements = max 2 sentences. Questions = max 1 sentence. Photo request = max 2 sentences.
+
+If acknowledging: express genuine appreciation for what was shared. Invite continuation.
+If asking: phrase the question as a gentle clarification, not an interrogation.
+If requesting photo: explain warmly how it will help bring the story to life. Make clear it's optional.
+
+Examples of good acknowledgement tone:
+"That's a remarkable memory — the way you describe the monsoon season really brings it to life. Please continue."
+"I can feel the weight of that moment. Take your time and tell me more whenever you're ready."
+---
+
+4. Insert message into context_messages: { session_id, role: 'assistant', content: generatedMessage, message_order: next }
+5. Update session.status = 'awaiting_user'
+6. Trigger Supabase Realtime update (handled automatically by DB insert)
+7. Return { success: true, message: generatedMessage, decision: evaluator_result.decision }
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-09 — process-chunk Orchestrator</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/process-chunk/index.ts
+This is the Phase 1 orchestrator. Called after every transcription.
+
+Handles: POST { session_id: string, chunk_id: string }
+
+It calls the 4 Phase 1 agents IN SEQUENCE via fetch():
+
+const BASE = Deno.env.get('SUPABASE_URL') + '/functions/v1'
+const H = { 'Authorization': 'Bearer ' + Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'), 'Content-Type': 'application/json' }
+
+async function callAgent(name: string, body: object) {
+  const r = await fetch(`${BASE}/${name}`, { method: 'POST', headers: H, body: JSON.stringify(body) })
+  const d = await r.json()
+  if (!d.success) throw new Error(`${name} failed: ${JSON.stringify(d)}`)
+  return d
+}
+
+Sequence:
+1. Update session.status = 'processing_chunk'
+2. Run S-Agent and E-Agent in PARALLEL:
+   const [sResult, eResult] = await Promise.all([
+     callAgent('run-s-agent', { session_id }),
+     callAgent('run-e-agent', { session_id })
+   ])
+3. Run Evaluator with both outputs:
+   const evalResult = await callAgent('run-evaluator', { session_id })
+4. Run Clarification Agent:
+   await callAgent('run-clarification', { session_id, evaluator_result: evalResult.result })
+5. Update session.status = 'awaiting_user'
+6. Log: "Chunk processed for session: " + session_id + " | Score: " + evalResult.result.overall_score
+
+Error handling: if any agent fails, log it but do NOT crash — still try to send an acknowledgement.
+The user must always receive a response, even if agents had issues.
+Log all agent outputs to a processing_log table (create this if needed).
+    </div>
+
+    <div class="callout co-v">
+      <span class="co-hd hd-v">🧪 Phase 2 Critical Test — Run This Before Building UI</span>
+      <p>Create test-phase1.mjs: upload your real test-story.m4a, create a session, call transcribe-chunk, then watch process-chunk run all 4 agents. Log every output. Verify: (1) Whisper transcript is accurate. (2) S-Agent produces meaningful sentiment JSON. (3) E-Agent correctly identifies characters with user perspective. (4) Evaluator gives a reasonable score. (5) Clarification Agent produces a warm human-sounding message. All 5 pass? Then build the UI.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ PHASE 2 AGENTS ══════════ -->
+<div id="phase2agents">
+  <div class="phase-banner">
+    <div class="pb-inner">
+      <span class="pb-pre">Phase 3 — Weeks 8–11</span>
+      <div class="pb-title" style="color:var(--amber)">Phase 2 Agents — The Book</div>
+      <p class="pb-desc">Breaker, Proxy Writer, Picasso, Binder. These turn the Bible into a published PDF book. The moment that surprises the user. Build and test each agent separately. Quality is everything here.</p>
+      <div class="pb-rule" style="background:var(--amber)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="reveal">
+    <h2><span class="chip ca">The Bible</span> Assembly Service</h2>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-10 — bibleService + generate-book Orchestrator</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Create src/lib/bibleService.ts AND supabase/functions/generate-book/index.ts
+
+1. bibleService.ts (client-side helper):
+   assembleBible(sessionId: string): Promise&lt;Bible&gt;
+   - Fetch: sentiment_store, entity_store, all context_messages for session
+   - Return: { sentimentStore, entityStore, contextWindow: messages[], sessionId }
+   This is called client-side to trigger book generation.
+
+2. supabase/functions/generate-book/index.ts (the Phase 2 orchestrator):
+   Handles: POST { session_id: string }
+   
+   - Update session.phase = 2, session.status = 'generating_book'
+   - Fetch the Bible from DB (S store + E store + context messages)
+   - Serialize Bible into a single context object
+   
+   Sequence (await each step):
+   Step 1: callAgent('run-breaker', { session_id, bible })
+           → Returns chapter structure
+   Step 2: For each chapter from Step 1:
+           await callAgent('run-proxy-writer', { session_id, chapter_id, bible })
+           (Process chapters sequentially to maintain coherence)
+   Step 3: callAgent('run-picasso', { session_id, bible })
+           → Generates all images (this runs Replicate — takes time)
+   Step 4: callAgent('run-binder', { session_id })
+           → Assembles final PDF
+   
+   - On completion: update session.status = 'book_ready'
+   - On any failure: session.status = 'failed', session.error_message = error
+   - Return { success: true, book_id }
+
+   Also expose: GET ?session_id=xxx → returns current session status + progress
+    </div>
+
+    <h2><span class="chip ca">Breaker + Proxy Writer</span> Literary Agents</h2>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-11 — run-breaker Edge Function</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/run-breaker/index.ts
+Handles: POST { session_id: string, bible: object }
+
+The Breaker reads the entire Bible and structures the story into chapters.
+It thinks like India's greatest literary masters.
+
+Call Claude API with this system prompt:
+
+SYSTEM PROMPT:
+---
+You are the Breaker Agent. You are a master literary architect who thinks like
+India's greatest storytellers: Munshi Premchand, Dharmveer Bharati,
+Suryakant Tripathi Nirala, Amrita Pritam. You understand that the ORDER of
+a story's revelation is as important as the story itself.
+
+You receive: a complete "Bible" containing:
+- The narrator's full transcript (raw, spoken, unstructured)
+- Sentiment analysis (emotional arc, tonality, direction)
+- Entity map (all characters, places, events, eras and narrator's perspective on each)
+
+Your task: divide the story into optimal chapters.
+NOT chronological necessarily — find the order that creates the most
+emotionally resonant, structurally beautiful book.
+
+Consider: what should the reader discover first? Where should the emotional peak be?
+What should be the final chapter that leaves the reader changed?
+
+Respond with ONLY valid JSON:
+{
+  "book_title": string (evocative, literary — 4-6 words),
+  "book_subtitle": string or null,
+  "narrative_structure": string (describe your structural choice and why),
+  "chapters": [
+    {
+      "chapter_number": integer,
+      "title": string (literary, evocative — not descriptive),
+      "era": string,
+      "primary_location": string,
+      "primary_character": string (entity_id from entity store),
+      "emotional_arc": string (what emotional journey this chapter takes reader on),
+      "relevant_transcript_sections": string[] (exact quotes from transcript that belong here),
+      "image_concept": string (describe the scene/photo feel for chapter image — be specific about lighting, mood, era)
+    }
+  ],
+  "total_chapters": integer
+}
+
+RULE: Each chapter title should be so good a reader would stop at a bookshop to read it.
+---
+
+Steps:
+1. Call Claude with Bible serialized as context
+2. Parse JSON response
+3. Insert each chapter into chapters table
+4. Insert into books table: { session_id, user_id, cover_title: book_title, status: 'generating' }
+5. Return { success: true, chapters: parsedChapters, book_id }
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-12 — run-proxy-writer Edge Function</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/run-proxy-writer/index.ts
+Handles: POST { session_id: string, chapter_id: string, bible: object }
+
+The Proxy Writer transforms one raw chapter into beautiful literary prose.
+This is the agent that makes the user say "I didn't tell you this much."
+
+Steps:
+1. Fetch chapter from DB by chapter_id
+2. Build chapter context:
+   - Chapter's relevant_transcript_sections
+   - Primary character details + narrator's perspective from entity store
+   - Era and location from chapter
+   - Story's overall sentiment and emotional arc
+   - Any clarification answers relevant to this era/characters
+
+3. Call Claude API with system prompt:
+
+SYSTEM PROMPT:
+---
+You are the Proxy Writer — a literary author with 40 years of experience
+writing prize-winning novels and memoirs across multiple languages and cultures.
+You have a deep understanding of the human condition, Indian history and culture,
+and the art of capturing lived experience in prose.
+
+Your task: take raw, spoken transcript fragments and transform them into
+a beautifully written chapter for a personal memoir.
+
+CRITICAL RULES:
+1. PRESERVE THE NARRATOR'S PERSPECTIVE ABSOLUTELY.
+   If they say their grandmother was cruel — she is cruel in your prose.
+   If they experienced success as painful — portray it as painful.
+   You are their voice, not the judge of their experience.
+2. Write in first person (narrator's voice) unless they told the story in third person.
+3. Use vivid, specific sensory details. Reconstruct what the air smelled like.
+4. Show, don't tell. Let the reader feel the emotion from action and detail.
+5. Honor the culture, language, and setting. Use appropriate Hindi terms naturally.
+6. Length: 400-700 words. Flowing prose. Natural paragraph breaks. No bullet points.
+7. Opening: begin with a specific sensory moment or image that draws the reader in.
+8. Closing: end on a resonant note — a thought, an image, or a quiet revelation.
+9. You may reconstruct dialogue if implied in the transcript. Keep it authentic.
+10. DO NOT sanitize. DO NOT add false hope. DO NOT change what the narrator felt.
+---
+
+USER: "Chapter: {title}\nEra: {era}, {location}\nCharacter: {character name} — {narrator's perspective on them}\n\nRaw story fragments:\n{transcript_sections}"
+
+4. Save response to chapter.content_written
+5. Update chapter.status = 'written'
+6. Return { success: true, chapter_id, word_count: approx }
+    </div>
+
+    <h2><span class="chip ca">Picasso + Binder</span> Visual Assembly</h2>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-13 — run-picasso Edge Function</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/run-picasso/index.ts
+Handles: POST { session_id: string, bible: object }
+
+Picasso generates all images for all chapters. Two workflows:
+
+WORKFLOW A — Era-transform user photos:
+For each character with photo_url set (user uploaded):
+1. Get signed URL for the character's photo from 'photos' bucket
+2. Determine the era from the chapter where this character is most prominent
+3. Build img2img prompt:
+   "Transform this portrait to appear as a photograph taken in {era} in {location}.
+   {Era} photographic style: {specific visual details for era}.
+   Preserve the subject's facial identity and core features exactly.
+   Film grain, period-appropriate lighting, authentic {era} aesthetic."
+   negative_prompt: "modern, contemporary, digital photography, 2020s, 2010s"
+4. Call Replicate "stability-ai/sdxl" with img2img:
+   image: signedPhotoUrl, prompt: above, strength: 0.55, num_inference_steps: 30
+5. Poll Replicate (5s intervals, 5min timeout)
+6. Download result, upload to 'photos/{session_id}/char_{char_id}_era.jpg'
+7. Update character.photo_era_transformed_url
+
+WORKFLOW B — Generate chapter illustrations:
+For each chapter WITHOUT a transformed character photo:
+1. Get chapter.image_concept, era, location, emotional_arc
+2. Get story sentiment from sentiment_store
+3. Build generation prompt:
+   "{image_concept}. {Era} photographic style. Set in {location}.
+   Emotional quality: {emotional_arc}.
+   Photorealistic, film photography aesthetic, warm tones, {era} visual grammar.
+   Compositionally strong, would work as a book chapter opener."
+   negative_prompt: "illustration, digital art, modern, contemporary, 2020s, cartoon, anime"
+4. Call Replicate "stability-ai/sdxl" text-to-image:
+   num_inference_steps: 30, guidance_scale: 7.5, width: 1024, height: 768
+5. Poll, download, upload to 'photos/{session_id}/chapter_{chap_id}.jpg'
+6. Update chapter.image_url and chapter.image_prompt
+
+Process all images. Log failures but don't abort — chapters can have no image if generation fails.
+After all done: return { success: true, images_generated: count, images_failed: count }
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-14 — run-binder Edge Function (PDF Generation)</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build: supabase/functions/run-binder/index.ts
+Handles: POST { session_id: string }
+
+This creates the final PDF book. This is the moment that surprises the user.
+
+Steps:
+1. Fetch: book record, all chapters (ordered), session (for author name/title)
+2. Get signed URLs for all chapter image_urls
+3. Build the complete book HTML:
+
+HTML TEMPLATE (TypeScript template literal):
+---
+DOCTYPE html, head:
+  Fonts: embed Cormorant Garamond (serif, body) via Google Fonts link
+  CSS:
+    @page { size: 148mm 210mm; margin: 22mm 18mm 20mm 22mm; }
+    body { font-family: 'Cormorant Garamond', serif; font-size: 11.5pt; line-height: 1.75; color: #1a1410; }
+    .cover { page-break-after: always; display: flex; flex-direction: column; justify-content: center; min-height: 85vh; border: 1px solid #8a7a6a; padding: 40px; }
+    .cover-title { font-size: 28pt; font-weight: 700; line-height: 1.1; margin-bottom: 16px; }
+    .cover-author { font-size: 13pt; font-style: italic; color: #6b5c4e; }
+    .toc { page-break-after: always; }
+    .chapter { page-break-before: always; }
+    .chapter-number { font-size: 9pt; letter-spacing: 0.3em; text-transform: uppercase; color: #8a7a6a; margin-bottom: 8px; }
+    .chapter-title { font-size: 20pt; font-weight: 700; line-height: 1.1; margin-bottom: 8px; }
+    .chapter-meta { font-size: 9pt; font-style: italic; color: #8a7a6a; margin-bottom: 32px; border-bottom: 1px solid #d4c4b4; padding-bottom: 12px; }
+    .chapter-image { width: 100%; height: auto; max-height: 200px; object-fit: cover; margin: 0 0 24px 0; display: block; }
+    .chapter-body p:first-child::first-letter { font-size: 3em; font-weight: 700; float: left; line-height: 0.7; padding-right: 8px; padding-top: 4px; }
+    .chapter-body p { text-align: justify; margin-bottom: 1em; }
+    @media print { .chapter { page-break-before: always; } }
+
+Structure:
+  COVER PAGE: book title + decorative SVG ornament + "By {author_name}" + year
+  TOC: list of chapter titles
+  EACH CHAPTER:
+    Chapter number (roman numeral)
+    Chapter title
+    Era + Location in italic
+    Full-width chapter image (if exists) with era as caption
+    Chapter prose (content_written) with proper paragraph formatting
+
+4. Call PDFShift API:
+   POST https://api.pdfshift.io/v3/convert/pdf
+   Authorization: Basic base64("{PDFSHIFT_API_KEY}:")
+   Content-Type: application/json
+   Body: { source: htmlString, sandbox: false, 
+           format: "A5", margin: { top: "22mm", bottom: "20mm", left: "22mm", right: "18mm" } }
+
+5. Receive PDF as ArrayBuffer
+6. Upload to Supabase Storage: 'books/{session_id}/kahoma_book.pdf'
+7. Update books: { pdf_url: storagePath, status: 'ready', page_count: estimated }
+8. Update session.status = 'book_ready'
+9. Return { success: true, pdf_url }
+
+The HTML must produce a book that looks genuinely published.
+Include the complete HTML template string in the function.
+    </div>
+
+    <div class="callout co-a">
+      <span class="co-hd hd-a">🧪 Phase 3 Critical Test — End to End</span>
+      <p>Use your real 3-minute test story. Upload → process all Phase 1 agents → click generate book → watch Breaker structure chapters → Proxy Writer rewrite in literary prose → Picasso transform photos → Binder produce PDF. Open the PDF. It must look like a real book. If it does — you have a product.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ THE APP ══════════ -->
+<div id="app">
+  <div class="phase-banner">
+    <div class="pb-inner">
+      <span class="pb-pre">Phase 4 — Weeks 12–13</span>
+      <div class="pb-title" style="color:var(--teal-l)">The Mobile App</div>
+      <p class="pb-desc">Build the screens. The pipeline already works. Now make it beautiful to use. Every screen is a separate prompt. Test on real device after each one.</p>
+      <div class="pb-rule" style="background:var(--teal)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="reveal">
+    <h2><span class="chip ct">Recording</span> Voice Recording + Session Screen</h2>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-15 — Recording Hook + Upload Service</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Create two files:
+
+1. src/hooks/useRecording.ts:
+State: recordingState: 'idle'|'recording'|'paused', currentRecording, durationMillis, audioLevels: number[]
+
+Functions:
+- startRecording():
+  await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true })
+  Create recording with HIGH_QUALITY preset + isMeteringEnabled: true
+  onRecordingStatusUpdate: update durationMillis and audioLevels (20 values)
+  Auto-stop at 10 minutes (600000ms)
+
+- pauseRecording(): recording.pauseAsync()
+- resumeRecording(): recording.startAsync()
+- stopAndGetUri(): recording.stopAndUnloadAsync(), return recording.getURI()
+- discardRecording(): stop + delete local file + reset state
+
+Return: { recordingState, durationMillis, audioLevels, startRecording, pauseRecording, resumeRecording, stopAndGetUri, discardRecording, permissionDenied }
+
+2. src/lib/uploadService.ts:
+createSession(userId: string, title: string): Promise&lt;Session&gt;
+  Insert into sessions table, return row
+
+uploadChunk(localUri: string, sessionId: string, chunkOrder: number): Promise&lt;VoiceChunk&gt;
+  - Upload to Storage: audio/{userId}/{sessionId}/chunk_{chunkOrder}_{timestamp}.m4a
+  - Insert into voice_chunks: { session_id, user_id, audio_url: path, chunk_order }
+  - Fire-and-forget: supabase.functions.invoke('transcribe-chunk', { body: { chunk_id } })
+  - Return the inserted chunk
+
+uploadCharacterPhoto(localUri: string, sessionId: string, characterId: string): Promise&lt;string&gt;
+  - Upload to Storage: photos/{userId}/{sessionId}/char_{characterId}.jpg
+  - Update character.photo_url = storagePath
+  - Return storagePath
+
+Full TypeScript. Error handling for file too large (200MB limit for audio, 20MB for photos).
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-16 — Active Session Screen (The Core Loop)</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build src/app/session/[id].tsx — The active storytelling session screen.
+This is where the user lives for their entire story. 
+
+THREE MODES based on session.status:
+
+=== RECORDING MODE (status = 'recording' or 'awaiting_user') ===
+Dark background (#050508).
+Top: session title, small "Session" label.
+
+CHAT AREA (ScrollView, main body):
+  Shows conversation history from context_messages:
+  - User transcript chunks: right-aligned dark cards, user's words
+  - AI clarification messages: left-aligned, warm amber-tinted cards
+    with a small Kahoma "K" avatar
+  Photo request messages: show a camera icon button inline
+  Auto-scroll to latest message.
+
+BOTTOM AREA:
+  If status = 'awaiting_user' (AI responded, waiting for more):
+    - "Record more" mic button (amber, pulsing slightly)
+    - "That's my story →" gold button → triggers generate-book
+
+  If status = 'recording' / user is actively recording:
+    - AudioWaveform component (animated bars)
+    - "Recording... 0:42" timer
+    - "Done" button to stop and upload chunk
+    - "Pause" small button
+
+  Photo upload prompt (when AI asks for a photo):
+    Show inline image picker → call uploadCharacterPhoto()
+
+=== PROCESSING MODE (status = 'processing_chunk') ===
+  Show "AgentStatusBar" component: animated dots showing which agents are running
+  "Listening to your story..." text
+  Chat area still visible underneath
+
+=== BOOK GENERATION MODE (status = 'generating_book') ===
+  Navigate to /book/[id] screen
+
+LOGIC:
+- Use useSessionStatus hook for real-time updates
+- When new context_message appears (Realtime): scroll chat to bottom
+- AudioWaveform: import from components/AudioWaveform.tsx
+- Record chunk → uploadChunk() → transcribe-chunk triggers automatically → process-chunk runs → clarification message appears in chat
+
+TypeScript. Dark amber aesthetic. The chat feel must be intimate and warm.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-17 — Home + Library + Book Screens</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build four screens:
+
+1. src/app/(tabs)/index.tsx — Home Screen:
+   Dark background. 
+   Top: "Kahoma" in Cormorant Garamond, amber. Greeting.
+   
+   Empty state: 
+     Large decorative feather quill SVG (amber outline)
+     "Every life holds a story worth telling."
+     "Begin yours." button → creates new session → navigates to /session/[id]
+   
+   Recent sessions list (last 3):
+     SessionCard component: title, status indicator, date
+     Tap → navigate to /session/[id] or /book/[id] if book_ready
+   
+   "+ New Story" floating button (amber, bottom right)
+
+2. src/components/SessionCard.tsx:
+   Dark card, title, date, status badge:
+   - recording/awaiting_user: amber dot + "In Progress"
+   - generating_book: animated spinner + "Creating your book..."
+   - book_ready: teal dot + "Book Ready"
+   - failed: red dot + "Error"
+   Tap handler prop
+
+3. src/app/book/[id].tsx — Book Screen:
+   
+   GENERATING STATE (status = 'generating_book'):
+     Animated open-book SVG (pages turning gently)
+     Current progress description (update as chapters get written)
+     "We're writing your story... this takes about 5 minutes."
+   
+   READY STATE (status = 'book_ready'):
+     BookCover component: deep dark card, amber title, "By [name]", year
+     Slide-up reveal animation
+     "Your book is ready." in Cormorant Garamond, large
+     Subtext: "Open it. It's yours."
+     "Read My Book" primary button → opens PDF via Linking.openURL(signedUrl)
+     "Download" secondary button → expo-file-system + MediaLibrary
+     "Share" outline button → expo-sharing
+
+4. src/app/(tabs)/_layout.tsx:
+   Tab bar: Home (book icon), Record (mic), Profile (person)
+   Background: #050508, active: amber, inactive: muted
+   No labels — icons only
+
+Dark deep aesthetic throughout. The app must feel like an intimate, sacred space for stories.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-18 — Onboarding (Emotional, Non-Generic)</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Build src/app/onboarding.tsx — 3-screen first-launch onboarding.
+
+These are people with stories they've never told anyone.
+The tone must be: sacred, warm, safe, non-clinical, slightly poetic.
+
+Screen 1 — "Some stories wait a lifetime."
+  Background: #050508
+  Large: glowing amber ink-drop animation (SVG, radiating warmth)
+  Heading: "Some stories wait a lifetime." — Cormorant Garamond, 32pt
+  Body: "This is a place for the ones you've kept inside.
+  The stories you couldn't tell. The lives you watched.
+  The people you want remembered."
+  "I have a story" → next
+
+Screen 2 — "Just speak. We understand."
+  Three points:
+  🎙️ "Speak in any language, any order, any time"
+  🤍 "We ask almost nothing — just listen deeply"
+  📖 "We give you back a book you'll treasure forever"
+  "How does it work?" → next
+
+Screen 3 — "Your stories stay yours."
+  Privacy emphasis (critical for this audience — these are suppressed stories):
+  "Everything you share is completely private.
+  Only you can access your stories and your book.
+  We never read, share, or use your stories for anything else."
+  Microphone permission request (explain gently why needed)
+  "Begin my story" → mark onboarding done + navigate to tabs
+
+Check AsyncStorage "kahoma_onboarded" in _layout.tsx.
+Swipeable FlatList with pagingEnabled. Dot indicators.
+Deep dark background, amber glows, Cormorant Garamond headings.
+The user must feel: safe, seen, ready.
+    </div>
+
+    <div class="callout co-t">
+      <span class="co-hd hd-t">✅ Full End-to-End Gate</span>
+      <p>On real phone: Login → Onboarding → Record 3 minutes of a real story → Watch AI respond in chat → Answer one clarification question → Tap "That's my story" → Wait for book generation → Open PDF → See a real book with chapters, images, and beautifully written prose. This is the moment. Git tag: v0.1.0</p>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ SHIP ══════════ -->
+<div id="ship">
+  <div class="phase-banner">
+    <div class="pb-inner">
+      <span class="pb-pre">Phase 5 — Week 14</span>
+      <div class="pb-title" style="color:var(--sage-l)">Test, Polish, Ship</div>
+      <p class="pb-desc">Beta testing, pre-submission audit, App Store submission, and post-launch setup. Follow every step in exact order.</p>
+      <div class="pb-rule" style="background:var(--sage)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="reveal">
+    <h2><span class="chip cs">Audit</span> Pre-Ship Code Audit</h2>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-19 — Complete Code Audit</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Do a complete pre-submission audit of Kahoma.
+
+1. MEMORY LEAKS:
+   - expo-av Recording: stopped and unloaded on unmount?
+   - Supabase Realtime channels: removed in cleanup?
+   - All intervals/timeouts: cleared in cleanup?
+
+2. EMOTIONAL SAFETY (critical — users share suppressed stories):
+   - If user is mid-recording and navigates away: recording stops gracefully?
+   - If transcription fails: are they clearly informed? Can they retry?
+   - If book generation fails: is their ENTIRE story data preserved in DB?
+   - Is there any scenario where story data is silently lost? Find and fix.
+   - Privacy: are audio files NEVER logged or sent to any external logging?
+
+3. AGENT FAILURE RESILIENCE:
+   - If S-Agent fails: does E-Agent still run?
+   - If Evaluator fails: does Clarification Agent still send acknowledgement?
+   - If one Proxy Writer chapter fails: do other chapters still get written?
+   - If Picasso fails on one image: does PDF still generate without it?
+
+4. SECURITY:
+   - All storage paths use signed URLs (never public)?
+   - No API keys in any client-side code?
+   - All DB operations use RLS — a user cannot access another user's story?
+
+5. MISSING STATES:
+   - Empty session (user created session but never recorded): handled?
+   - Very short story (under 30 seconds): what happens?
+   - Story with no characters identifiable: PDF still generates?
+
+For each issue: file, problem, exact fix.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Build Prompt B-20 — EAS Build + App Store Submission</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Configure EAS Build and App Store submission for Kahoma.
+
+1. Create eas.json with preview and production profiles
+2. Final app.json with all required permissions
+3. Show exact commands:
+   eas build --platform ios --profile preview   (for TestFlight)
+   eas submit --platform ios
+   eas build --platform android --profile preview
+
+Also write:
+- App Store name: "Kahoma — Your Story, Your Book"
+- Subtitle (30 chars): "Voice to book in minutes"
+- Description (4000 chars): 
+  Lead with: suppressed stories, untold lives, the people we want remembered.
+  This is NOT a journaling app. It is a memoir creation platform.
+  Emotional tone. Target: people in their 30s-70s with family stories to preserve.
+- Keywords: memoir, voice journal, family history, life story, book maker, storytelling
+- Age rating: 4+
+
+Write a Privacy Policy HTML for Kahoma:
+- Audio processed by OpenAI Whisper for transcription
+- Story text processed by Anthropic Claude for analysis and writing
+- Photos processed by Replicate for era transformation
+- All data stored privately in Supabase
+- No story content ever read by Kahoma team
+- No selling, no advertising, complete user data deletion available
+- GDPR + CCPA compliant
+    </div>
+
+    <h2><span class="chip cs">Launch</span> Final Checklist</h2>
+    <ul class="checklist">
+      <li><span class="ck ck-t">✓</span>Full story-to-book flow tested on production Supabase (not local) with real voice recording</li>
+      <li><span class="ck ck-t">✓</span>Tested on real iPhone AND real Android phone</li>
+      <li><span class="ck ck-t">✓</span>Tested with 3+ minute story in Hindi-English mix</li>
+      <li><span class="ck ck-t">✓</span>All 4 Phase 1 agents logged and verified on real story</li>
+      <li><span class="ck ck-t">✓</span>Clarification question appeared at right time, answered, loop continued</li>
+      <li><span class="ck ck-t">✓</span>Photo upload → era transformation visible in final PDF</li>
+      <li><span class="ck ck-t">✓</span>PDF quality is genuinely book-like — chapters, images, drop caps, beautiful</li>
+      <li><span class="ck ck-t">✓</span>App in airplane mode: error shown, no crash, story data preserved in DB</li>
+      <li><span class="ck ck-t">✓</span>Session fails mid-generation: story data is NOT lost, retry works</li>
+      <li><span class="ck ck-t">✓</span>All API keys in Supabase secrets — zero in any source file</li>
+      <li><span class="ck ck-t">✓</span>RLS verified: user A cannot access user B's stories</li>
+      <li><span class="ck ck-t">✓</span>Privacy Policy live at a real URL</li>
+      <li><span class="ck ck-t">✓</span>Supabase on Pro plan (free tier pauses after inactivity)</li>
+      <li><span class="ck ck-t">✓</span>5 real people have completed full flow and received their book</li>
+      <li><span class="ck ck-t">✓</span>Agent failure monitoring wired (Supabase webhook → email on session failure)</li>
+    </ul>
+  </section>
+
+  <!-- DEBUG REFERENCE -->
+  <section class="reveal">
+    <h2><span class="chip cg">Always Available</span> Debug Prompts</h2>
+
+    <div class="prompt">
+<span class="pl">Debug D-01 — Universal Bug Fix</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Bug. Do NOT rewrite files I haven't asked you to change.
+
+Error: <span class="ph">[EXACT ERROR + FULL STACK TRACE]</span>
+File: <span class="ph">[filename]</span>
+Broken function (paste ONLY the broken function):
+<span class="ph">[paste here]</span>
+Expected: <span class="ph">[what should happen]</span>
+Actual: <span class="ph">[what actually happens]</span>
+
+Root cause: diagnose WHY.
+Fix: minimum code change only.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Debug D-02 — Claude JSON Parsing Failure</span>
+<span class="pw">Claude.ai</span>
+My Edge Function calls Claude API expecting JSON but parsing fails.
+
+System prompt I'm using: <span class="ph">[paste]</span>
+Raw response I'm receiving: <span class="ph">[paste]</span>
+Parse error: <span class="ph">[paste]</span>
+
+Issues to check:
+1. Is Claude wrapping JSON in markdown code blocks? (strip them)
+2. Is system prompt explicit enough about "ONLY JSON, no other text"?
+3. Is there leading/trailing whitespace or hidden characters?
+
+Fix: update system prompt AND add robust JSON extraction:
+- Try JSON.parse first
+- If fails: extract content between first { and last }
+- If still fails: log raw response and return error with the raw text
+    </div>
+
+    <div class="prompt">
+<span class="pl">Debug D-03 — Agent Producing Wrong Output</span>
+<span class="pw">Claude.ai</span>
+One of my Kahoma agents is producing bad output.
+
+Agent: <span class="ph">[S-Agent / E-Agent / Evaluator / Breaker / Proxy Writer / Picasso]</span>
+Problem: <span class="ph">[describe what's wrong with the output]</span>
+My current system prompt: <span class="ph">[paste complete system prompt]</span>
+Context I'm feeding it: <span class="ph">[paste the context]</span>
+Current output: <span class="ph">[paste the bad output]</span>
+Expected output: <span class="ph">[describe what it should produce]</span>
+
+Diagnose: is this a system prompt design issue, a context issue, or an edge case?
+Fix the system prompt. Show me specifically what changed and why.
+    </div>
+
+    <div class="prompt">
+<span class="pl">Debug D-04 — Replicate Image Generation Failing</span>
+<span class="pw">Claude.ai</span>
+Replicate image generation is failing in my Picasso agent.
+
+Error from Supabase logs: <span class="ph">[paste]</span>
+My Replicate API call code: <span class="ph">[paste]</span>
+Model I'm using: <span class="ph">[model identifier]</span>
+
+Check:
+1. Is the input image URL accessible? (signed URLs expire — check timing)
+2. Is the model identifier correct and still available on Replicate?
+3. Is my polling logic correct? (status: starting → processing → succeeded/failed)
+4. Is the output format what I expect? (URL? array of URLs?)
+
+Fix the call. Also: if this model is unavailable, what is the best alternative?
+    </div>
+
+    <div class="prompt">
+<span class="pl">Debug D-05 — Realtime Not Updating in Chat</span>
+<span class="pw">Cursor</span>
+[PASTE CONTEXT.md FIRST]
+
+Supabase Realtime subscription not receiving context_messages in session screen.
+DB row IS being inserted (confirmed in Supabase dashboard).
+App is not receiving the event.
+
+My subscription code: <span class="ph">[paste from session/[id].tsx]</span>
+
+Check:
+1. Does RLS SELECT policy allow this user to read context_messages?
+   (Realtime requires SELECT permission — show me the policy fix)
+2. Is the Realtime filter syntax correct for postgres_changes?
+3. Is the channel being cleaned up causing re-subscription issues?
+4. Is context_messages table enabled for Realtime in Supabase?
+   (ALTER PUBLICATION supabase_realtime ADD TABLE context_messages)
+
+Fix the subscription AND the RLS policy.
+    </div>
+
+    <!-- COST TABLE -->
+    <h3>Complete Cost Breakdown</h3>
+    <div class="cost-box">
+      <div class="cost-row"><div class="cost-l">Supabase Free (development)</div><div class="cost-v">$0/mo</div></div>
+      <div class="cost-row"><div class="cost-l">Supabase Pro (pre-launch upgrade)</div><div class="cost-v">$25/mo</div></div>
+      <div class="cost-row"><div class="cost-l">OpenAI Whisper — ~$0.006/min × avg 8min/session</div><div class="cost-v">~$0.05/book</div></div>
+      <div class="cost-row"><div class="cost-l">Claude API — 6 agents × avg calls per session (Sonnet)</div><div class="cost-v">~$0.12/book</div></div>
+      <div class="cost-row"><div class="cost-l">Replicate — ~5-8 images per book</div><div class="cost-v">~$0.10/book</div></div>
+      <div class="cost-row"><div class="cost-l">PDFShift — PDF generation (free: 50/mo, then $9/mo)</div><div class="cost-v">$0–$9/mo</div></div>
+      <div class="cost-row"><div class="cost-l">EAS Build (free: 30 builds/month)</div><div class="cost-v">$0/mo</div></div>
+      <div class="cost-row"><div class="cost-l">Apple Developer Program</div><div class="cost-v">$99/year</div></div>
+      <div class="cost-row"><div class="cost-l">Google Play Console</div><div class="cost-v">$25 once</div></div>
+      <div class="cost-row total"><div class="cost-l">Total cost per book generated</div><div class="cost-v">~$0.27</div></div>
+    </div>
+
+    <div class="callout co-a">
+      <span class="co-hd hd-a">💰 Pricing Model — High Margin by Design</span>
+      <p>Charge <strong style="color:var(--text)">₹999 (≈$12) per book</strong>, or a subscription of <strong style="color:var(--text)">₹299/month</strong> for 2 books. Cost per book: ~$0.27. Revenue per book: ~$12. That is <strong style="color:var(--amber)">97.7% gross margin</strong>. The emotional value makes premium pricing natural — this is a memoir, not an app.</p>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <h2 style="color:var(--amber)">Speak.<br><span style="color:var(--text);font-style:italic;font-family:'Cormorant Garamond',serif">Be remembered.</span></h2>
+  <p style="margin-top:20px">Kahoma — Complete Build Bible · 6 AI Agents · 3 Memory Stores · 1 Surprise</p>
+  <p style="margin-top:6px">Built with the Vibe Coding Masterclass principles. Follow the laws. Ship the surprise.</p>
+</footer>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const s=document.documentElement.scrollTop;
+  const h=document.documentElement.scrollHeight-window.innerHeight;
+  document.getElementById('prog').style.width=(s/h*100)+'%';
+});
+const io=new IntersectionObserver((e)=>{
+  e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('on');});
+},{threshold:0.05,rootMargin:'0px 0px -20px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
