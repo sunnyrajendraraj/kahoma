@@ -60,3 +60,7 @@ web/.next/
 .vercel/
 web/.vercel/
 
+# Career Prep Files (Local only)
+interview_prep.md
+
+
